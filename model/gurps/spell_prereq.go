@@ -110,6 +110,14 @@ func (p *SpellPrereq) Satisfied(entity *Entity, exclude any, tooltip *xbytes.Ins
 					break
 				}
 			}
+		case spellcmp.PowerSource:
+			if p.QualifierCriteria.Matches(replacements, sp.PowerSourceWithReplacements()) {
+				count++
+			}
+		case spellcmp.Class:
+			if p.QualifierCriteria.Matches(replacements, sp.ClassWithReplacements()) {
+				count++
+			}
 		case spellcmp.College:
 			for _, one := range sp.CollegeWithReplacements() {
 				if p.QualifierCriteria.Matches(replacements, one) {
@@ -154,6 +162,10 @@ func (p *SpellPrereq) Satisfied(entity *Entity, exclude any, tooltip *xbytes.Ins
 				tooltip.WriteString(i18n.Text("whose name "))
 			case spellcmp.Tag:
 				tooltip.WriteString(i18n.Text("whose tag "))
+			case spellcmp.PowerSource:
+				tooltip.WriteString(i18n.Text("whose power source "))
+			case spellcmp.Class:
+				tooltip.WriteString(i18n.Text("whose class "))
 			case spellcmp.College:
 				tooltip.WriteString(i18n.Text("whose college "))
 			}

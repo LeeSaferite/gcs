@@ -115,6 +115,8 @@ func TestSpellPrereqNilEntity(t *testing.T) {
 	for _, subType := range []spellcmp.Type{
 		spellcmp.Name,
 		spellcmp.Tag,
+		spellcmp.PowerSource,
+		spellcmp.Class,
 		spellcmp.College,
 		spellcmp.CollegeCount,
 		spellcmp.Any,
@@ -129,4 +131,97 @@ func TestSpellPrereqNilEntity(t *testing.T) {
 		}, "%v: a nil entity must not panic", subType)
 		c.Equal("", tooltip.String(), "%v: no tooltip should be written for a nil entity", subType)
 	}
+}
+
+// TestSpellPrereqPowerSource verifies that a Power Source prerequisite counts only spells whose power source matches
+// the qualifier, and that it distinguishes between spells that share the same name but have different power sources.
+func TestSpellPrereqPowerSource(t *testing.T) {
+	c := check.New(t)
+
+	e := NewEntity()
+
+	// "Detect Magic" exists in all three power sources, so a name-based match alone can't tell them apart.
+	manaDetectMagic := addTestSpell(e, "Detect Magic", fxp.One)
+	manaDetectMagic.PowerSource = "Mana"
+	sanctityDetectMagic := addTestSpell(e, "Detect Magic", fxp.One)
+	sanctityDetectMagic.PowerSource = "Sanctity"
+	natureDetectMagic := addTestSpell(e, "Detect Magic", fxp.One)
+	natureDetectMagic.PowerSource = "Nature's Strength"
+
+	// "Shape Earth" exists in only two power sources
+	manaShapeEarth := addTestSpell(e, "Shape Earth", fxp.One)
+	manaShapeEarth.PowerSource = "Mana"
+	natureShapeEarth := addTestSpell(e, "Shape Earth", fxp.One)
+	natureShapeEarth.PowerSource = "Nature's Strength"
+
+	req := NewSpellPrereq()
+	req.SubType = spellcmp.PowerSource
+	req.QualifierCriteria.Compare = criteria.IsText
+	req.QualifierCriteria.Qualifier = "Mana"
+
+	// Exactly two Mana spells exist and using "exactly 2" rather than "at least 2" catches the non-Mana spells being accidentally included
+	req.QuantityCriteria.Compare = criteria.EqualsNumber
+	req.QuantityCriteria.Qualifier = fxp.FromInteger(2)
+	c.True(
+		req.Satisfied(e, nil, nil, "", nil),
+		"the two Mana spells should satisfy an exactly-2 Mana requirement",
+	)
+
+	// Requiring more than two Mana spells must fail, since only two exist.
+	req.QuantityCriteria.Compare = criteria.AtLeastNumber
+	req.QuantityCriteria.Qualifier = fxp.FromInteger(3)
+	var tooltip xbytes.InsertBuffer
+	c.False(
+		req.Satisfied(e, nil, &tooltip, "", nil),
+		"only two Mana spells exist, so a more-than-2 requirement must fail",
+	)
+	c.Contains(
+		tooltip.String(),
+		"power source",
+		"the tooltip should mention 'power source'",
+	)
+}
+
+// TestSpellPrereqClass verifies that a class prerequisite counts only spells whose class matches the qualifier.
+func TestSpellPrereqClass(t *testing.T) {
+	c := check.New(t)
+
+	e := NewEntity()
+
+	// "Reflect" exists as both a Regular and a Blocking spell, so a name-based match alone can't tell them apart.
+	regularReflect := addTestSpell(e, "Reflect", fxp.One)
+	regularReflect.Class = "Regular"
+	blockingReflect := addTestSpell(e, "Reflect", fxp.One)
+	blockingReflect.Class = "Blocking"
+
+	// "Fireball" exists as only a Regular spell.
+	regularFireball := addTestSpell(e, "Fireball", fxp.One)
+	regularFireball.Class = "Regular"
+
+	req := NewSpellPrereq()
+	req.SubType = spellcmp.Class
+	req.QualifierCriteria.Compare = criteria.IsText
+	req.QualifierCriteria.Qualifier = "Regular"
+
+	// Exactly two Regular spells exist and using "exactly 2" rather than "at least 2" catches the non-Regular spells being accidentally included
+	req.QuantityCriteria.Compare = criteria.EqualsNumber
+	req.QuantityCriteria.Qualifier = fxp.FromInteger(2)
+	c.True(
+		req.Satisfied(e, nil, nil, "", nil),
+		"the two Regular spells should satisfy an exactly-2 Regular requirement",
+	)
+
+	// Requiring more than two Regular spells must fail, since only two exist.
+	req.QuantityCriteria.Compare = criteria.AtLeastNumber
+	req.QuantityCriteria.Qualifier = fxp.FromInteger(3)
+	var tooltip xbytes.InsertBuffer
+	c.False(
+		req.Satisfied(e, nil, &tooltip, "", nil),
+		"only two Regular spells exist, so a more-than-2 requirement must fail",
+	)
+	c.Contains(
+		tooltip.String(),
+		"class",
+		"the tooltip should mention 'class'",
+	)
 }

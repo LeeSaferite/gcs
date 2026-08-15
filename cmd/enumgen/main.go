@@ -1062,6 +1062,14 @@ var allEnums = []*enumInfo{
 				String:  "with a tag which",
 			},
 			{
+				Key:    "power_source",
+				String: "whose power source",
+			},
+			{
+				Key:    "class",
+				String: "whose class",
+			},
+			{
 				Key:    "college",
 				String: "whose college name",
 			},

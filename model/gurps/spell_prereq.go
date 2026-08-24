@@ -32,6 +32,8 @@ type SpellPrereq struct {
 	Has               bool            `json:"has"`
 	QualifierCriteria criteria.Text   `json:"qualifier,omitzero"`
 	QuantityCriteria  criteria.Number `json:"quantity,omitzero"`
+
+	Checks PrereqChecks[*Spell] `json:"checks,omitzero"`
 }
 
 // NewSpellPrereq creates a new SpellPrereq.
@@ -60,6 +62,7 @@ func (p *SpellPrereq) ParentList() *PrereqList {
 func (p *SpellPrereq) Clone(parent *PrereqList) Prereq {
 	clone := *p
 	clone.Parent = parent
+
 	return &clone
 }
 

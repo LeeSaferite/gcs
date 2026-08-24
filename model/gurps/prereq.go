@@ -40,3 +40,21 @@ func HasText(has bool) string {
 	}
 	return i18n.Text("Does not have")
 }
+
+type PrereqChecks[T any] []PrereqCheck[T]
+
+func (pc PrereqChecks[T]) Clone(parent Prereq) PrereqChecks[T] {
+	c := make(PrereqChecks[T], len(pc))
+	for i, item := range pc {
+		c[i] = item.Clone(parent)
+	}
+	return c
+}
+
+type PrereqCheck[T any] interface {
+	Type() prereq.Type
+	Parent() Prereq
+	Clone(parent Prereq) PrereqCheck[T]
+	Check(entity *Entity, target T, state map[string]any) error
+	Tooltip(buffer *xbytes.InsertBuffer)
+}

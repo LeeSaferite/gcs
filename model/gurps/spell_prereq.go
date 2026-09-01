@@ -10,6 +10,8 @@
 package gurps
 
 import (
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"hash"
 
 	"github.com/richardwilkes/gcs/v5/model/criteria"
@@ -26,23 +28,28 @@ var _ Prereq = &SpellPrereq{}
 
 // SpellPrereq holds a prerequisite for a spell.
 type SpellPrereq struct {
-	Parent            *PrereqList     `json:"-"`
-	Type              prereq.Type     `json:"type"`
-	SubType           spellcmp.Type   `json:"sub_type"`
-	Has               bool            `json:"has"`
-	QualifierCriteria criteria.Text   `json:"qualifier,omitzero"`
-	QuantityCriteria  criteria.Number `json:"quantity,omitzero"`
+	Parent           *PrereqList        `json:"-"`
+	Type             prereq.Type        `json:"type"`
+	Has              bool               `json:"has"`
+	QuantityCriteria criteria.Number    `json:"quantity,omitzero"`
+	Checks           []SpellPrereqCheck `json:"checks,omitzero"`
+
+	// DEPRECATED
+	SubType spellcmp.Type `json:"sub_type"`
+	// DEPRECATED
+	QualifierCriteria criteria.Text `json:"qualifier,omitzero"`
 }
 
 // NewSpellPrereq creates a new SpellPrereq.
 func NewSpellPrereq() *SpellPrereq {
 	var p SpellPrereq
 	p.Type = prereq.Spell
-	p.SubType = spellcmp.Name
-	p.QualifierCriteria.Compare = criteria.IsText
+	p.Has = true
 	p.QuantityCriteria.Compare = criteria.AtLeastNumber
 	p.QuantityCriteria.Qualifier = fxp.One
-	p.Has = true
+	p.Checks = []SpellPrereqCheck{{Type: spellcmp.Name, Compare: criteria.IsText.String()}}
+	// p.SubType = spellcmp.Name
+	// p.QualifierCriteria.Compare = criteria.IsText
 	return &p
 }
 
@@ -65,8 +72,10 @@ func (p *SpellPrereq) Clone(parent *PrereqList) Prereq {
 
 // FillWithNameableKeys implements Prereq.
 func (p *SpellPrereq) FillWithNameableKeys(m, existing map[string]string) {
-	if p.SubType.UsesStringCriteria() {
-		nameable.Extract(m, existing, p.QualifierCriteria.Qualifier)
+	for _, check := range p.Checks {
+		if check.Type.UsesStringCriteria() {
+			nameable.Extract(m, existing, check.Qualifier)
+		}
 	}
 }
 
@@ -98,6 +107,36 @@ func (p *SpellPrereq) Satisfied(entity *Entity, exclude any, tooltip *xbytes.Ins
 		if techLevel != nil && sp.TechLevel != nil && *techLevel != *sp.TechLevel {
 			return false
 		}
+
+		for _, check := range p.Checks {
+			switch check.Type {
+			case spellcmp.Name:
+				if p.QualifierCriteria.Matches(replacements, sp.NameWithReplacements()) {
+					count++
+				}
+			case spellcmp.Tag:
+				for _, one := range sp.Tags {
+					if p.QualifierCriteria.Matches(replacements, one) {
+						count++
+						break
+					}
+				}
+			case spellcmp.College:
+				for _, one := range sp.CollegeWithReplacements() {
+					if p.QualifierCriteria.Matches(replacements, one) {
+						count++
+						break
+					}
+				}
+			case spellcmp.CollegeCount:
+				for _, one := range sp.CollegeWithReplacements() {
+					colleges[one] = true
+				}
+			case spellcmp.Any:
+				count++
+			}
+		}
+
 		switch p.SubType {
 		case spellcmp.Name:
 			if p.QualifierCriteria.Matches(replacements, sp.NameWithReplacements()) {
@@ -205,4 +244,31 @@ func (p *SpellPrereq) Hash(h hash.Hash) {
 	xhash.Bool(h, p.Has)
 	p.QualifierCriteria.Hash(h)
 	p.QuantityCriteria.Hash(h)
+}
+
+// UnmarshalJSONFrom implements json.UnmarshalerFrom.
+func (p *SpellPrereq) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
+	var localData struct {
+		Parent           *PrereqList        `json:"-"`
+		Type             prereq.Type        `json:"type"`
+		Has              bool               `json:"has"`
+		QuantityCriteria criteria.Number    `json:"quantity,omitzero"`
+		Checks           []SpellPrereqCheck `json:"checks,omitzero"`
+
+		// DEPRECATED
+		SubType *spellcmp.Type `json:"sub_type"`
+		// DEPRECATED
+		QualifierCriteria *criteria.Text `json:"qualifier,omitzero"`
+	}
+	if err := json.UnmarshalDecode(dec, &localData); err != nil {
+		return err
+	}
+
+	p.Parent = localData.Parent
+	p.Type = localData.Type
+	p.Has = localData.Has
+	p.QuantityCriteria = localData.QuantityCriteria
+	p.Checks = localData.Checks
+
+	return nil
 }

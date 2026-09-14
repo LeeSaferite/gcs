@@ -536,7 +536,7 @@ func export(entity *Entity, tmpl exporter, exportPath string) (err error) {
 		resolvedFrequency := t.ResolvedFrequency(nil)
 		trait := &exportedTrait{
 			ID:                   t.TID,
-			Points:               t.AdjustedPoints(),
+			Points:               t.AdjustedPoints(nil),
 			Description:          t.String(),
 			UserDescription:      t.UserDescWithReplacements(),
 			CR:                   resolvedSelfControl.Number(),

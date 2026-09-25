@@ -12,6 +12,8 @@
 package ux
 
 import (
+	"fmt"
+
 	"github.com/richardwilkes/toolbox/v2/geom"
 	"github.com/richardwilkes/unison"
 	"github.com/richardwilkes/unison/accessibility"
@@ -101,4 +103,41 @@ func (s *smokeSession) key(code unison.KeyCode, mods mod.Modifiers) {
 // for Save and so on.
 func (s *smokeSession) command(code unison.KeyCode) {
 	s.key(code, mod.OSMenuCommand())
+}
+
+// dialogPrompt returns the text of the first label in the focused window, which for the application's dialogs is the
+// question being asked, failing the test if the focused window is the workspace rather than a dialog.
+func (s *smokeSession) dialogPrompt() string {
+	s.t.Helper()
+	w := s.screen.FocusedWindow()
+	if w == s.wnd {
+		s.t.Fatal("no dialog has the focus")
+	}
+	var prompt string
+	defer func() { s.checkInvariants(fmt.Sprintf("the %q dialog", prompt), w) }()
+	s.screen.AccessibilityTree(w).Walk(func(n *accessibility.Node) bool {
+		if !n.Ignored && n.Role.Key() == "label" {
+			prompt = n.Name
+			return false
+		}
+		return true
+	})
+	return prompt
+}
+
+// answerPicker answers the template picker dialog that has the focus: it checks that the dialog is asking prompt, ticks
+// the named choices, checks that they satisfy the picker, which is what enables its OK button, and presses OK. Choices
+// are named as their check boxes are, point costs included, e.g. "Fit [5 points]".
+func (s *smokeSession) answerPicker(prompt string, choices ...string) {
+	s.t.Helper()
+	if got := s.dialogPrompt(); got != prompt {
+		s.t.Fatalf("expected the picker for %q, but the focused dialog asks %q", prompt, got)
+	}
+	for _, choice := range choices {
+		s.click("check-box", choice)
+	}
+	if s.find("button", "OK").Disabled {
+		s.t.Fatalf("the choices for %q do not satisfy the picker: %q", prompt, choices)
+	}
+	s.click("button", "OK")
 }

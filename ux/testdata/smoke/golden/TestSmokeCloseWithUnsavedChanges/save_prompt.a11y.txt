@@ -1,0 +1,5 @@
+label "Save changes made to" text="Save changes made to"
+label "Aldric Vane?" text="Aldric Vane?"
+button "Cancel" [focused]
+button "No"
+button "Yes"

@@ -1,0 +1,460 @@
+image "Holding down the Alt+ key while using the mouse wheel will change the scale."
+button "Help"
+text-field "Scale" value="100%"
+button "Opens/closes all hierarchical rows"
+button "Opens/closes all embedded notes"
+button "Sheet Settings"
+button "Attributes"
+button "Body Type"
+toggle-button "Edit the sheet's block layout" checked=off
+button "Block layout menu"
+button "Clone Character Sheet & Re-Randomize Fields"
+button "Sync with all sources in this sheet"
+button "Calculators"
+button "Previous Match" [disabled]
+button "Next Match" [disabled]
+text-field "Search" desc="Search\nPress RETURN to select the next match\nPress SHIFT-RETURN to select the previous match" placeholder="Search"
+  button "Clear" [disabled]
+label "-" text="-" desc="Number of matches found"
+check-box "Names Only" checked=off
+scroll-area
+  scroll-bar
+  image "Portrait" desc="Drop an image here or double-click to change the portrait"
+  group "Identity"
+    button "Randomize the name using the current ancestry"
+    label "Name" text="Name"
+    text-field "Name" value="Aldric Vane" [focused]
+    label "Title" text="Title"
+    text-field "Title" value="Knight Errant"
+    label "Organization" text="Organization"
+    text-field "Organization"
+  group "Miscellaneous"
+    label "Created" text="Created"
+    label "Sep 24, 2026, 7:12 PM" text="Sep 24, 2026, 7:12 PM"
+    label "Modified" text="Modified"
+    label "Sep 24, 2026, 7:12 PM" text="Sep 24, 2026, 7:12 PM"
+    label "Player" text="Player"
+    text-field "Player" value="Smoke Test"
+  group "Description"
+    button "Randomize the gender using the current ancestry"
+    label "Gender" text="Gender"
+    text-field "Gender" value="Male"
+    button "Randomize the age using the current ancestry"
+    label "Age" text="Age"
+    text-field "Age" value="27"
+    button "Randomize the birthday using the current calendar"
+    label "Birthday" text="Birthday"
+    text-field "Birthday"
+    label "Religion" text="Religion"
+    text-field "Religion"
+    button "Randomize the height using the current ancestry"
+    label "Height" text="Height"
+    text-field "Height" value="0'"
+    button "Randomize the weight using the current ancestry"
+    label "Weight" text="Weight"
+    text-field "Weight" value="0 lb"
+    label "Size" text="Size"
+    text-field "Size" value="+0"
+    label "TL" text="TL"
+    text-field "TL" desc="TL0: Stone Age (Prehistory)\nTL1: Bronze Age (3500 B.C.+)\nTL2: Iron Age (1200 B.C.+)\nTL3: Medieval (600 A.D.+)\nTL4: Age of Sail (1450+)\nTL5: Industrial Revolution (1730+)\nTL6: Mechanized Age (1880+)\nTL7: Nuclear Age (1940+)\nTL8: Digital Age (1980+)\nTL9: Microtech Age (2025+?)\nTL10: Robotic Age (2070+?)\nTL11: Age of Exotic Matter\nTL12: Anything Goes"
+    button "Randomize the hair using the current ancestry"
+    label "Hair" text="Hair"
+    text-field "Hair"
+    button "Randomize the eyes using the current ancestry"
+    label "Eyes" text="Eyes"
+    text-field "Eyes"
+    button "Randomize the skin using the current ancestry"
+    label "Skin" text="Skin"
+    text-field "Skin"
+    button "Randomize the handedness using the current ancestry"
+    label "Hand" text="Hand"
+    text-field "Hand"
+  label "150 Points" text="150 Points"
+  button "Edit points"
+  label "42" text="42" desc="Points earned but not yet spent"
+  label "Unspent" text="Unspent" desc="Points earned but not yet spent"
+  label "0" text="0" desc="Total points spent on an ancestry package"
+  label "Ancestry" text="Ancestry" desc="Total points spent on an ancestry package"
+  label "90" text="90" desc="Total points spent on attributes"
+  label "Attributes" text="Attributes" desc="Total points spent on attributes"
+  label "25" text="25" desc="Total points spent on advantages"
+  label "Advantages" text="Advantages" desc="Total points spent on advantages"
+  label "-10" text="-10" desc="Total points spent on disadvantages"
+  label "Disadvantages" text="Disadvantages" desc="Total points spent on disadvantages"
+  label "0" text="0" desc="Total points spent on quirks"
+  label "Quirks" text="Quirks" desc="Total points spent on quirks"
+  label "3" text="3" desc="Total points spent on skills"
+  label "Skills" text="Skills" desc="Total points spent on skills"
+  label "0" text="0" desc="Total points spent on spells"
+  label "Spells" text="Spells" desc="Total points spent on spells"
+  group "Primary Attributes"
+    label "[20]" text="[20]" desc="Points spent on Strength (ST)"
+    text-field "Strength (ST)" value="12"
+    label "Strength (ST)" text="Strength (ST)"
+    label "[60]" text="[60]" desc="Points spent on Dexterity (DX)"
+    text-field "Dexterity (DX)" value="13"
+    label "Dexterity (DX)" text="Dexterity (DX)"
+    label "[0]" text="[0]" desc="Points spent on Intelligence (IQ)"
+    text-field "Intelligence (IQ)" value="10"
+    label "Intelligence (IQ)" text="Intelligence (IQ)"
+    label "[10]" text="[10]" desc="Points spent on Health (HT)"
+    text-field "Health (HT)" value="11"
+    label "Health (HT)" text="Health (HT)"
+  group "Basic Damage"
+    label "1d-1" text="1d-1"
+    label "Basic Thrust" text="Basic Thrust"
+    label "1d+2" text="1d+2"
+    label "Basic Swing" text="Basic Swing"
+  group "Secondary Attributes"
+    label "[0]" text="[0]" desc="Points spent on Will"
+    text-field "Will" value="10"
+    label "Will" text="Will"
+    label "[0]" text="[0]" desc="Points spent on Fright Check"
+    text-field "Fright Check" value="12" desc="Includes modifiers from:\nCombat Reflexes [+2]"
+    label "Fright Check" text="Fright Check" desc="Includes modifiers from:\nCombat Reflexes [+2]"
+    label "[0]" text="[0]" desc="Points spent on Perception (Per)"
+    text-field "Perception (Per)" value="10"
+    label "Perception (Per)" text="Perception (Per)"
+    label "[0]" text="[0]" desc="Points spent on Vision"
+    text-field "Vision" value="10"
+    label "Vision" text="Vision"
+    label "[0]" text="[0]" desc="Points spent on Hearing"
+    text-field "Hearing" value="10"
+    label "Hearing" text="Hearing"
+    label "[0]" text="[0]" desc="Points spent on Taste & Smell"
+    text-field "Taste & Smell" value="10"
+    label "Taste & Smell" text="Taste & Smell"
+    label "[0]" text="[0]" desc="Points spent on Touch"
+    text-field "Touch" value="10"
+    label "Touch" text="Touch"
+    label "[0]" text="[0]" desc="Points spent on Basic Speed"
+    text-field "Basic Speed" value="6"
+    label "Basic Speed" text="Basic Speed"
+    label "[0]" text="[0]" desc="Points spent on Basic Move"
+    text-field "Basic Move" value="6"
+    label "Basic Move" text="Basic Move"
+  group "Point Pools"
+    label "[0]" text="[0]" desc="Points spent on Fatigue Points (FP)"
+    text-field "Current Fatigue Points" value="11"
+    label "of" text="of"
+    text-field "Maximum Fatigue Points" value="11" desc="Fatigue Points"
+    label "FP" text="FP" desc="Fatigue Points"
+    label "[Rested]" text="[Rested]"
+    label "[0]" text="[0]" desc="Points spent on Hit Points (HP)"
+    text-field "Current Hit Points" value="12"
+    label "of" text="of"
+    text-field "Maximum Hit Points" value="12" desc="Hit Points"
+    label "HP" text="HP" desc="Hit Points"
+    label "[Healthy]" text="[Healthy]"
+  group "Humanoid"
+    label "Roll" text="Roll"
+    label "Location" text="Location"
+    label "DR" text="DR" desc="Damage Resistance for the hit location"
+    image "Notes for the hit location"
+    label " " text=" "
+    separator
+    label "Eyes" text="Eyes" desc="An attack that misses by 1 hits the torso instead. Only\nimpaling (imp), piercing (pi-, pi, pi+, pi++), and\ntight-beam burning (burn) attacks can target the eye – and\nonly from the front or sides. Injury over HP÷10 blinds the\neye. Otherwise, treat as skull, but without the extra DR!"
+    label "-9" text="-9"
+    separator
+    label "0" text="0" desc="The DR covering the Eyes hit location"
+    separator
+    text-field "Notes for the Eyes hit location"
+    label "3-4" text="3-4"
+    label "Skull" text="Skull" desc="An attack that misses by 1 hits the torso instead. Wounding\nmodifier is x4. Knockdown rolls are at -10. Critical hits\nuse the Critical Head Blow Table (B556). Exception: These\nspecial effects do not apply to toxic (tox) damage."
+    label "-7" text="-7"
+    label "2" text="2" desc="The DR covering the Skull hit location: • DR 2 against all attacks • Skull [+2 against all attacks]"
+    text-field "Notes for the Skull hit location"
+    label "5" text="5"
+    label "Face" text="Face" desc="An attack that misses by 1 hits the torso instead. Jaw,\ncheeks, nose, ears, etc. If the target has an open-faced\nhelmet, ignore its DR. Knockdown rolls are at -5. Critical\nhits use the Critical Head Blow Table (B556). Corrosion\n(cor) damage gets a x1½ wounding modifier, and if it\ninflicts a major wound, it also blinds one eye (both eyes on\ndamage over full HP). Random attacks from behind hit the\nskull instead."
+    label "-5" text="-5"
+    label "0" text="0" desc="The DR covering the Face hit location"
+    text-field "Notes for the Face hit location"
+    label "6-7" text="6-7"
+    label "Right Leg" text="Right Leg" desc="Reduce the wounding multiplier of large piercing (pi+), huge\npiercing (pi++), and impaling (imp) damage to x1. Any major\nwound (loss of over ½ HP from one blow) cripples the limb.\nDamage beyond that threshold is lost."
+    label "-2" text="-2"
+    label "0" text="0" desc="The DR covering the Right Leg hit location"
+    text-field "Notes for the Right Leg hit location"
+    label "8" text="8"
+    label "Right Arm" text="Right Arm" desc="Reduce the wounding multiplier of large piercing (pi+), huge\npiercing (pi++), and impaling (imp) damage to x1. Any major\nwound (loss of over ½ HP from one blow) cripples the limb.\nDamage beyond that threshold is lost. If holding a shield,\ndouble the penalty to hit: -4 for shield arm instead of -2."
+    label "-2" text="-2"
+    label "0" text="0" desc="The DR covering the Right Arm hit location"
+    text-field "Notes for the Right Arm hit location"
+    label "9-10" text="9-10"
+    label "Torso" text="Torso"
+    label "+0" text="+0"
+    label "0" text="0" desc="The DR covering the Torso hit location"
+    text-field "Notes for the Torso hit location"
+    label "11" text="11"
+    label "Groin" text="Groin" desc="An attack that misses by 1 hits the torso instead. Human\nmales and the males of similar species suffer double shock\nfrom crushing (cr) damage, and get -5 to knockdown rolls.\nOtherwise, treat as a torso hit."
+    label "-3" text="-3"
+    label "0" text="0" desc="The DR covering the Groin hit location"
+    text-field "Notes for the Groin hit location"
+    label "12" text="12"
+    label "Left Arm" text="Left Arm" desc="Reduce the wounding multiplier of large piercing (pi+), huge\npiercing (pi++), and impaling (imp) damage to x1. Any major\nwound (loss of over ½ HP from one blow) cripples the limb.\nDamage beyond that threshold is lost. If holding a shield,\ndouble the penalty to hit: -4 for shield arm instead of -2."
+    label "-2" text="-2"
+    label "0" text="0" desc="The DR covering the Left Arm hit location"
+    text-field "Notes for the Left Arm hit location"
+    label "13-14" text="13-14"
+    label "Left Leg" text="Left Leg" desc="Reduce the wounding multiplier of large piercing (pi+), huge\npiercing (pi++), and impaling (imp) damage to x1. Any major\nwound (loss of over ½ HP from one blow) cripples the limb.\nDamage beyond that threshold is lost."
+    label "-2" text="-2"
+    label "0" text="0" desc="The DR covering the Left Leg hit location"
+    text-field "Notes for the Left Leg hit location"
+    label "15" text="15"
+    label "Hand" text="Hand" desc="If holding a shield, double the penalty to hit: -8 for\nshield hand instead of -4. Reduce the wounding multiplier of\nlarge piercing (pi+), huge piercing (pi++), and impaling\n(imp) damage to x1. Any major wound (loss of over ⅓ HP\nfrom one blow) cripples the extremity. Damage beyond that\nthreshold is lost."
+    label "-4" text="-4"
+    label "0" text="0" desc="The DR covering the Hand hit location"
+    text-field "Notes for the Hand hit location"
+    label "16" text="16"
+    label "Foot" text="Foot" desc="Reduce the wounding multiplier of large piercing (pi+), huge\npiercing (pi++), and impaling (imp) damage to x1. Any major\nwound (loss of over ⅓ HP from one blow) cripples the\nextremity. Damage beyond that threshold is lost."
+    label "-4" text="-4"
+    label "0" text="0" desc="The DR covering the Foot hit location"
+    text-field "Notes for the Foot hit location"
+    label "17-18" text="17-18"
+    label "Neck" text="Neck" desc="An attack that misses by 1 hits the torso instead. Neck and\nthroat. Increase the wounding multiplier of crushing (cr)\nand corrosion (cor) attacks to x1½, and that of cutting\n(cut) damage to x2. At the GM’s option, anyone killed by a\ncutting (cut) blow to the neck is decapitated!"
+    label "-5" text="-5"
+    label "0" text="0" desc="The DR covering the Neck hit location"
+    text-field "Notes for the Neck hit location"
+    label " " text=" "
+    label "Vitals" text="Vitals" desc="An attack that misses by 1 hits the torso instead. Heart,\nlungs, kidneys, etc. Increase the wounding modifier for an\nimpaling (imp) or any piercing (pi-, pi, pi+, pi++) attack\nto x3. Increase the wounding modifier for a tight-beam\nburning (burn) attack to x2. Other attacks cannot target the\nvitals."
+    label "-3" text="-3"
+    label "0" text="0" desc="The DR covering the Vitals hit location"
+    text-field "Notes for the Vitals hit location"
+  group "Encumbrance, Move & Dodge"
+    label "Level" text="Level"
+    label "Max Load" text="Max Load"
+    label "Move" text="Move"
+    label "Dodge" text="Dodge"
+    label "0" text="0"
+    label "None" text="None"
+    separator
+    label "29 lb" text="29 lb" desc="The maximum load that can be carried and still remain within the None\nencumbrance level"
+    separator
+    label "6" text="6" desc="The ground movement rate for the None encumbrance level"
+    separator
+    label "10" text="10" desc="The dodge for the None encumbrance level"
+    label "1" text="1"
+    label "Light" text="Light"
+    label "58 lb" text="58 lb" desc="The maximum load that can be carried and still remain within the Light\nencumbrance level"
+    label "4" text="4" desc="The ground movement rate for the Light encumbrance level"
+    label "9" text="9" desc="The dodge for the Light encumbrance level"
+    label "2" text="2"
+    label "Medium" text="Medium"
+    label "87 lb" text="87 lb" desc="The maximum load that can be carried and still remain within the Medium\nencumbrance level"
+    label "3" text="3" desc="The ground movement rate for the Medium encumbrance level"
+    label "8" text="8" desc="The dodge for the Medium encumbrance level"
+    label "3" text="3"
+    label "Heavy" text="Heavy"
+    label "174 lb" text="174 lb" desc="The maximum load that can be carried and still remain within the Heavy\nencumbrance level"
+    label "2" text="2" desc="The ground movement rate for the Heavy encumbrance level"
+    label "7" text="7" desc="The dodge for the Heavy encumbrance level"
+    label "4" text="4"
+    label "X-Heavy" text="X-Heavy"
+    label "290 lb" text="290 lb" desc="The maximum load that can be carried and still remain within the X-Heavy\nencumbrance level"
+    label "1" text="1" desc="The ground movement rate for the X-Heavy encumbrance level"
+    label "6" text="6" desc="The dodge for the X-Heavy encumbrance level"
+  group "Lifting & Moving Things"
+    label "29 lb" text="29 lb" desc="The weight that can be lifted overhead with one hand in one second"
+    label "Basic Lift" text="Basic Lift" desc="The weight that can be lifted overhead with one hand in one second"
+    label "58 lb" text="58 lb" desc="The weight that can be lifted overhead with one hand in two seconds"
+    label "One-Handed Lift" text="One-Handed Lift" desc="The weight that can be lifted overhead with one hand in two seconds"
+    label "232 lb" text="232 lb" desc="The weight that can be lifted overhead with both hands in four seconds"
+    label "Two-Handed Lift" text="Two-Handed Lift" desc="The weight that can be lifted overhead with both hands in four seconds"
+    label "348 lb" text="348 lb" desc="The weight of an object that can be shoved and knocked over"
+    label "Shove & Knock Over" text="Shove & Knock Over" desc="The weight of an object that can be shoved and knocked over"
+    label "696 lb" text="696 lb" desc="The weight of an object that can be shoved and knocked over with a running start"
+    label "Running Shove & Knock Over" text="Running Shove & Knock Over" desc="The weight of an object that can be shoved and knocked over with a running start"
+    label "435 lb" text="435 lb" desc="The weight that can be carried slung across the back"
+    label "Carry On Back" text="Carry On Back" desc="The weight that can be carried slung across the back"
+    label "1,450 lb" text="1,450 lb" desc="The weight that can be shifted slightly on a floor"
+    label "Shift Slightly" text="Shift Slightly" desc="The weight that can be shifted slightly on a floor"
+  table-header
+    column-header "±" text="±" desc="Modifier"
+    column-header "Condition" text="Condition"
+  table "Conditional Modifiers"
+    row "+3, Condition on all HT rolls to avoid knockdown and stunning"
+      cell
+        group desc="+3 from trait High Pain Threshold"
+          label "+3" text="+3"
+      cell
+        document [readonly]
+          paragraph text="on all HT rolls to avoid knockdown and stunning" [readonly]
+    row "+6, Condition on all IQ rolls to wake up or to recover from mental stun"
+      cell
+        group desc="+6 from trait Combat Reflexes"
+          label "+6" text="+6"
+      cell
+        document [readonly]
+          paragraph text="on all IQ rolls to wake up or to recover from mental stun" [readonly]
+    row "+3, Condition to resist torture"
+      cell
+        group desc="+3 from trait High Pain Threshold"
+          label "+3" text="+3"
+      cell
+        document [readonly]
+          paragraph text="to resist torture" [readonly]
+  table-header
+    column-header "Trait" text="Trait"
+    column-header "Pts" text="Pts" desc="Points"
+    column-header "A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22"
+    column-header "Indicates whether the data matches the source library it came from"
+  table "Traits"
+    row "Combat Reflexes, Pts 15, A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22 DFA48"
+      cell
+        label "Combat Reflexes" text="Combat Reflexes"
+      cell
+        label "15" text="15"
+      cell
+        link "DFA48"
+      cell
+        group desc="Data matches library source data Library: richardwilkes/gcs_master_library Path: Dungeon Fantasy RPG/Dungeon Fantasy RPG Traits.adq ID: tCYtcHP6jABdRlOIR"
+    row "High Pain Threshold\nNever suffer shock penalties when injured, Pts 10, A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22 DFA50"
+      cell
+        label "High Pain Threshold" text="High Pain Threshold"
+        button "Hide notes"
+        document [readonly]
+          paragraph text="Never suffer shock penalties when injured" [readonly]
+      cell
+        label "10" text="10"
+      cell
+        link "DFA50"
+      cell
+        group desc="Data matches library source data Library: richardwilkes/gcs_master_library Path: Dungeon Fantasy RPG/Dungeon Fantasy RPG Traits.adq ID: tc_Qbi7FjKyAHTlbT"
+    row "Honesty (CR12)\nSelf-Control Roll (CR): 12 or less (Resist quite often), Pts -10, A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22 DFA61"
+      cell
+        label "Honesty (CR12)" text="Honesty (CR12)"
+        button "Hide notes"
+        document [readonly]
+          paragraph text="Self-Control Roll (CR): 12 or less (Resist quite often)" [readonly]
+      cell
+        label "-10" text="-10"
+      cell
+        link "DFA61"
+      cell
+        group desc="Data matches library source data Library: richardwilkes/gcs_master_library Path: Dungeon Fantasy RPG/Dungeon Fantasy RPG Traits.adq ID: t86Al1mZc85hcEuo6"
+  table-header
+    column-header "Skill / Technique" text="Skill / Technique"
+    column-header "SL" text="SL" desc="Skill Level"
+    column-header "RSL" text="RSL" desc="Relative Skill Level"
+    column-header "Pts" text="Pts" desc="Points"
+    column-header "A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22"
+    column-header "Indicates whether the data matches the source library it came from"
+  table "Skills"
+    row "Broadsword, SL 12, RSL DX-1, Pts 1, A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22 DFA81"
+      cell
+        label "Broadsword" text="Broadsword"
+      cell
+        label "12" text="12"
+      cell
+        label "DX-1" text="DX-1"
+      cell
+        label "1" text="1"
+      cell
+        link "DFA81"
+      cell
+        group desc="Data matches library source data Library: richardwilkes/gcs_master_library Path: Dungeon Fantasy RPG/Dungeon Fantasy RPG Skills.skl ID: sIPa439w__PRt4CT8"
+    row "Leadership, SL 9, RSL IQ-1, Pts 1, A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22 DFA80"
+      cell
+        label "Leadership" text="Leadership"
+      cell
+        label "9" text="9"
+      cell
+        label "IQ-1" text="IQ-1"
+      cell
+        label "1" text="1"
+      cell
+        link "DFA80"
+      cell
+        group desc="Data matches library source data Library: richardwilkes/gcs_master_library Path: Dungeon Fantasy RPG/Dungeon Fantasy RPG Skills.skl ID: s6U6i0W8Oj1FnQT7E"
+    row "Shield (Shield), SL 13, RSL DX, Pts 1, A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22 DFA88"
+      cell
+        label "Shield (Shield)" text="Shield (Shield)"
+      cell
+        label "13" text="13"
+      cell
+        label "DX" text="DX"
+      cell
+        label "1" text="1"
+      cell
+        link "DFA88"
+      cell
+        group desc="Data matches library source data Library: richardwilkes/gcs_master_library Path: Dungeon Fantasy RPG/Dungeon Fantasy RPG Skills.skl ID: sxrJ0547O4bP-EuZX"
+  table-header
+    column-header "Spell" text="Spell"
+    column-header "SL" text="SL" desc="Skill Level"
+    column-header "RSL" text="RSL" desc="Relative Skill Level"
+    column-header "Pts" text="Pts" desc="Points"
+    column-header "A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22"
+    column-header "Indicates whether the data matches the source library it came from"
+  table "Spells"
+  table-header
+    column-header "Whether this piece of equipment is equipped or just carried. Items that are not\nequipped do not apply any features they may normally contribute to the\ncharacter."
+    column-header "#" text="#" desc="Quantity"
+    column-header "Carried Equipment (18 lb; $660)" text="Carried Equipment (18 lb; $660)"
+    column-header "TL" text="TL" desc="Tech Level"
+    column-header "LC" text="LC" desc="Legality Class"
+    column-header "The value of one of these pieces of equipment"
+    column-header "The weight of one of these pieces of equipment"
+    column-header "The value of all of these pieces of equipment, plus the value of any contained\nequipment"
+    column-header "The weight of all of these pieces of equipment, plus the weight of any contained\nequipment"
+    column-header "A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22"
+    column-header "Indicates whether the data matches the source library it came from"
+  table "Carried Equipment Items"
+    row "# 1, Carried Equipment (18 lb; $660) Broadsword, The value of one of these pieces of equipment 600, The weight of one of these pieces of equipment 3 lb, The value of all of these pieces of equipment, plus the value of any contained\nequipment 600, The weight of all of these pieces of equipment, plus the weight of any contained\nequipment 3 lb, A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22 DFA99"
+      cell value="Unchecked" checked=off
+        check-box "Equipped" desc="Click to toggle whether this piece of equipment is equipped or just carried.\nItems that are not equipped do not apply any features they may normally\ncontribute to the character. Note that if a parent container is not equipped,\nnone of its contents are considered to be equipped either and any checkmark here\nwill be dimmed to reflect this." checked=off
+      cell
+        label "1" text="1"
+      cell
+        label "Broadsword" text="Broadsword"
+      cell
+      cell
+      cell
+        label "600" text="600"
+      cell
+        label "3 lb" text="3 lb"
+      cell
+        label "600" text="600"
+      cell
+        label "3 lb" text="3 lb"
+      cell
+        link "DFA99"
+      cell
+        group desc="Data matches library source data Library: richardwilkes/gcs_master_library Path: Dungeon Fantasy RPG/Dungeon Fantasy RPG Equipment.eqp ID: edBGjV_GEHSweJwx6"
+    row "# 1, Carried Equipment (18 lb; $660) Medium Shield, The value of one of these pieces of equipment 60, The weight of one of these pieces of equipment 15 lb, The value of all of these pieces of equipment, plus the value of any contained\nequipment 60, The weight of all of these pieces of equipment, plus the weight of any contained\nequipment 15 lb, A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22 DFA107"
+      cell value="Unchecked" checked=off
+        check-box "Equipped" desc="Click to toggle whether this piece of equipment is equipped or just carried.\nItems that are not equipped do not apply any features they may normally\ncontribute to the character. Note that if a parent container is not equipped,\nnone of its contents are considered to be equipped either and any checkmark here\nwill be dimmed to reflect this." checked=off
+      cell
+        label "1" text="1"
+      cell
+        label "Medium Shield" text="Medium Shield"
+      cell
+      cell
+      cell
+        label "60" text="60"
+      cell
+        label "15 lb" text="15 lb"
+      cell
+        label "60" text="60"
+      cell
+        label "15 lb" text="15 lb"
+      cell
+        link "DFA107"
+      cell
+        group desc="Data matches library source data Library: richardwilkes/gcs_master_library Path: Dungeon Fantasy RPG/Dungeon Fantasy RPG Equipment.eqp ID: eKyxH72tr0YDvofbk"
+  table-header
+    column-header "#" text="#" desc="Quantity"
+    column-header "Other Equipment (0 lb; $0)" text="Other Equipment (0 lb; $0)"
+    column-header "TL" text="TL" desc="Tech Level"
+    column-header "LC" text="LC" desc="Legality Class"
+    column-header "The value of one of these pieces of equipment"
+    column-header "The weight of one of these pieces of equipment"
+    column-header "The value of all of these pieces of equipment, plus the value of any contained\nequipment"
+    column-header "The weight of all of these pieces of equipment, plus the weight of any contained\nequipment"
+    column-header "A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22"
+    column-header "Indicates whether the data matches the source library it came from"
+  table "Other Equipment Items"
+  table-header
+    column-header "Note" text="Note"
+    column-header "A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22"
+    column-header "Indicates whether the data matches the source library it came from"
+  table "Notes"

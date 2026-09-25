@@ -1,0 +1,100 @@
+label "60 Points From" text="60 Points From"
+label "Pick 60 points worth" text="Pick 60 points worth"
+label "0" text="0"
+scroll-area
+  check-box "Increased Strength 1 [10 points]" checked=off [focused]
+  link "DFA8"
+  button "Edit level"
+  check-box "Increased Dexterity 1 [20 points]" checked=off
+  link "DFA8"
+  button "Edit level"
+  check-box "Increased Health 1 [10 points]" checked=off
+  link "DFA8"
+  button "Edit level"
+  check-box "Extra Hit Points 1 [2 points]" checked=off
+  link "DFA10"
+  button "Edit level"
+  check-box "Increased Basic Speed 1 [5 points]" checked=off
+  link "DFA11"
+  button "Edit level"
+  check-box "Armor Mastery [5 points]" checked=off
+  link "DFA28"
+  label " " text=" "
+  check-box "Born War Leader 1 [5 points]" checked=off
+  link "DFA47"
+  button "Edit level"
+  check-box "Enhanced Block (Cloak) 1 [5 points]" checked=off
+  link "DFA49"
+  button "Edit level"
+  check-box "Enhanced Block (Shield) 1 [5 points]" checked=off
+  link "DFA49"
+  button "Edit level"
+  check-box "Enhanced Parry (@Melee weapon skill Or Unarmed@) 1 [5 points]" checked=off
+  link "DFA49"
+  button "Edit level"
+  check-box "Extra Attack 1 [25 points]" checked=off
+  link "DFA49"
+  button "Edit level"
+  check-box "Fearlessness 1 [2 points]" checked=off
+  link "DFA49"
+  button "Edit level"
+  check-box "Fit, Very [15 points]" checked=off
+  link "DFA49"
+  label " " text=" "
+  check-box "Fit [5 points]" checked=off
+  link "DFA49"
+  label " " text=" "
+  check-box "Hard to Kill 1 [2 points]" checked=off
+  link "DFA50"
+  button "Edit level"
+  check-box "Hard to Subdue 1 [2 points]" checked=off
+  link "DFA50"
+  button "Edit level"
+  check-box "Luck [15 points]" checked=off
+  link "DFA51"
+  label " " text=" "
+  check-box "Luck, Extraordinary [30 points]" checked=off
+  link "DFA51"
+  label " " text=" "
+  check-box "Penetrating Voice [1 point]" checked=off
+  link "DFA52"
+  label " " text=" "
+  check-box "Rallying Cry [5 points]" checked=off
+  link "DFA28"
+  label " " text=" "
+  check-box "Recovery [10 points]" checked=off
+  link "DFA52"
+  label " " text=" "
+  check-box "Sacrificial Block [1 point]" checked=off
+  link "DFA28"
+  label " " text=" "
+  check-box "Rapid Healing [5 points]" checked=off
+  link "DFA52"
+  label " " text=" "
+  check-box "Sacrificial Parry [1 point]" checked=off
+  link "DFA29"
+  label " " text=" "
+  check-box "Shield Mastery [15 points]" checked=off
+  link "DFA29"
+  label " " text=" "
+  check-box "Shield-Wall Training [1 point]" checked=off
+  link "DFA29"
+  label " " text=" "
+  check-box "Signature Gear (@Item@) [1 point]" checked=off
+  link "DFA53"
+  label " " text=" "
+  check-box "Striking ST 1 [5 points]" checked=off
+  link "DFA53"
+  button "Edit level"
+  check-box "Trademark Move [1 point]" checked=off
+  link "DFA53"
+  label " " text=" "
+  check-box "Weapon Bond (@Specific Weapon@) [1 point]" checked=off
+  link "DFA54"
+  label " " text=" "
+  check-box "Weapon Master" checked=off
+  link "DFA54"
+  label " " text=" "
+button "Cancel"
+button "Override"
+button "OK" [disabled]

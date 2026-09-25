@@ -180,7 +180,7 @@ func (h *smokeLogHandler) WithGroup(name string) slog.Handler {
 // checkInvariants checks what must hold at every step of every test, whatever the test is about, failing the test for
 // each thing that does not: nothing in w may be a control without an accessible name (by the same rule as
 // TestEveryControlHasAnAccessibleName), nothing may have beeped, and nothing may have been logged as an error. It runs
-// whenever a test takes a GUI snapshot, so every screen a test looks at is checked.
+// whenever a test takes a GUI snapshot or reads a dialog, so every screen and dialog a test passes through is checked.
 // The where says which step it was, for the failure messages.
 func (s *smokeSession) checkInvariants(where string, w *unison.Window) {
 	s.t.Helper()
@@ -211,9 +211,14 @@ func (s *smokeSession) checkInvariants(where string, w *unison.Window) {
 //
 //   - The notes of a row in a list, such as a trait's, are shown in its cell as a document with no name of its own.
 //     TestEveryControlHasAnAccessibleName does not see these, since its rows have no notes.
+//   - The check boxes of the dialog that asks which modifiers a row should have are labeled only by the document laid
+//     out beside each, which is itself unnamed.
 func knownUnnamed(tree *accessibility.Tree, n *accessibility.Node) bool {
 	for p := tree.Node(n.Parent); p != nil; p = tree.Node(p.Parent) {
 		if n.Role == role.Document && (p.Role == role.Row || p.Role == role.Cell) {
+			return true
+		}
+		if p.Role == role.Group && p.Name == "Select Modifiers for" {
 			return true
 		}
 	}

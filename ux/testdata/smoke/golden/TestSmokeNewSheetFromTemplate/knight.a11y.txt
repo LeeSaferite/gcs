@@ -1,0 +1,828 @@
+image "Holding down the Alt+ key while using the mouse wheel will change the scale."
+button "Help" [focused]
+text-field "Scale" value="100%"
+button "Opens/closes all hierarchical rows"
+button "Opens/closes all embedded notes"
+button "Sheet Settings"
+button "Attributes"
+button "Body Type"
+toggle-button "Edit the sheet's block layout" checked=off
+button "Block layout menu"
+button "Clone Character Sheet & Re-Randomize Fields"
+button "Sync with all sources in this sheet"
+button "Calculators"
+button "Previous Match" [disabled]
+button "Next Match" [disabled]
+text-field "Search" desc="Search\nPress RETURN to select the next match\nPress SHIFT-RETURN to select the previous match" placeholder="Search"
+  button "Clear" [disabled] [offscreen]
+label "-" text="-" desc="Number of matches found"
+check-box "Names Only" checked=off
+scroll-area
+  scroll-bar
+  scroll-bar
+  image "Portrait" desc="Drop an image here or double-click to change the portrait"
+  group "Identity"
+    button "Randomize the name using the current ancestry"
+    label "Name" text="Name"
+    text-field "Name"
+    label "Title" text="Title"
+    text-field "Title"
+    label "Organization" text="Organization"
+    text-field "Organization"
+  group "Miscellaneous"
+    label "Created" text="Created"
+    label "Jan  2, 2026, 3:04 PM" text="Jan  2, 2026, 3:04 PM"
+    label "Modified" text="Modified"
+    label "Jan  2, 2026, 3:04 PM" text="Jan  2, 2026, 3:04 PM"
+    label "Player" text="Player"
+    text-field "Player"
+  group "Description"
+    button "Randomize the gender using the current ancestry"
+    label "Gender" text="Gender"
+    text-field "Gender"
+    button "Randomize the age using the current ancestry"
+    label "Age" text="Age"
+    text-field "Age"
+    button "Randomize the birthday using the current calendar"
+    label "Birthday" text="Birthday"
+    text-field "Birthday"
+    label "Religion" text="Religion"
+    text-field "Religion"
+    button "Randomize the height using the current ancestry"
+    label "Height" text="Height"
+    text-field "Height" value="0'"
+    button "Randomize the weight using the current ancestry"
+    label "Weight" text="Weight"
+    text-field "Weight" value="0 lb"
+    label "Size" text="Size"
+    text-field "Size" value="+0"
+    label "TL" text="TL"
+    text-field "TL" desc="TL0: Stone Age (Prehistory)\nTL1: Bronze Age (3500 B.C.+)\nTL2: Iron Age (1200 B.C.+)\nTL3: Medieval (600 A.D.+)\nTL4: Age of Sail (1450+)\nTL5: Industrial Revolution (1730+)\nTL6: Mechanized Age (1880+)\nTL7: Nuclear Age (1940+)\nTL8: Digital Age (1980+)\nTL9: Microtech Age (2025+?)\nTL10: Robotic Age (2070+?)\nTL11: Age of Exotic Matter\nTL12: Anything Goes"
+    button "Randomize the hair using the current ancestry"
+    label "Hair" text="Hair"
+    text-field "Hair" [offscreen]
+    button "Randomize the eyes using the current ancestry"
+    label "Eyes" text="Eyes"
+    text-field "Eyes" [offscreen]
+    button "Randomize the skin using the current ancestry"
+    label "Skin" text="Skin"
+    text-field "Skin" [offscreen]
+    button "Randomize the handedness using the current ancestry"
+    label "Hand" text="Hand"
+    text-field "Hand" [offscreen]
+  label "150 Points" text="150 Points" [offscreen]
+  button "Edit points" [offscreen]
+  label "-100" text="-100" desc="Points earned but not yet spent" [offscreen]
+  label "Overspent" text="Overspent" desc="Points earned but not yet spent" [offscreen]
+  label "0" text="0" desc="Total points spent on an ancestry package" [offscreen]
+  label "Ancestry" text="Ancestry" desc="Total points spent on an ancestry package" [offscreen]
+  label "0" text="0" desc="Total points spent on attributes" [offscreen]
+  label "Attributes" text="Attributes" desc="Total points spent on attributes" [offscreen]
+  label "245" text="245" desc="Total points spent on advantages" [offscreen]
+  label "Advantages" text="Advantages" desc="Total points spent on advantages" [offscreen]
+  label "-50" text="-50" desc="Total points spent on disadvantages" [offscreen]
+  label "Disadvantages" text="Disadvantages" desc="Total points spent on disadvantages" [offscreen]
+  label "0" text="0" desc="Total points spent on quirks" [offscreen]
+  label "Quirks" text="Quirks" desc="Total points spent on quirks" [offscreen]
+  label "55" text="55" desc="Total points spent on skills" [offscreen]
+  label "Skills" text="Skills" desc="Total points spent on skills" [offscreen]
+  label "0" text="0" desc="Total points spent on spells" [offscreen]
+  label "Spells" text="Spells" desc="Total points spent on spells" [offscreen]
+  group "Primary Attributes"
+    label "[0]" text="[0]" desc="Points spent on Strength (ST)" [offscreen]
+    text-field "Strength (ST)" value="15" desc="Includes modifiers from:\nIncreased Strength 4 [+4 (+1 per level)]\nIncreased Strength 1 [+1 (+1 per level)]"
+    label "Strength (ST)" text="Strength (ST)" desc="Includes modifiers from:\nIncreased Strength 4 [+4 (+1 per level)]\nIncreased Strength 1 [+1 (+1 per level)]"
+    label "[0]" text="[0]" desc="Points spent on Dexterity (DX)" [offscreen]
+    text-field "Dexterity (DX)" value="15" desc="Includes modifiers from:\nIncreased Dexterity 4 [+4 (+1 per level)]\nIncreased Dexterity 1 [+1 (+1 per level)]"
+    label "Dexterity (DX)" text="Dexterity (DX)" desc="Includes modifiers from:\nIncreased Dexterity 4 [+4 (+1 per level)]\nIncreased Dexterity 1 [+1 (+1 per level)]"
+    label "[0]" text="[0]" desc="Points spent on Intelligence (IQ)" [offscreen]
+    text-field "Intelligence (IQ)" value="10"
+    label "Intelligence (IQ)" text="Intelligence (IQ)"
+    label "[0]" text="[0]" desc="Points spent on Health (HT)" [offscreen]
+    text-field "Health (HT)" value="13" desc="Includes modifiers from:\nIncreased Health 3 [+3 (+1 per level)]"
+    label "Health (HT)" text="Health (HT)" desc="Includes modifiers from:\nIncreased Health 3 [+3 (+1 per level)]"
+  group "Basic Damage"
+    label "1d+1" text="1d+1"
+    label "Basic Thrust" text="Basic Thrust"
+    label "2d+1" text="2d+1"
+    label "Basic Swing" text="Basic Swing"
+  group "Secondary Attributes"
+    label "[0]" text="[0]" desc="Points spent on Will"
+    text-field "Will" value="10"
+    label "Will" text="Will"
+    label "[0]" text="[0]" desc="Points spent on Fright Check"
+    text-field "Fright Check" value="12" desc="Includes modifiers from:\nCombat Reflexes [+2]"
+    label "Fright Check" text="Fright Check" desc="Includes modifiers from:\nCombat Reflexes [+2]"
+    label "[0]" text="[0]" desc="Points spent on Perception (Per)"
+    text-field "Perception (Per)" value="10"
+    label "Perception (Per)" text="Perception (Per)"
+    label "[0]" text="[0]" desc="Points spent on Vision"
+    text-field "Vision" value="10"
+    label "Vision" text="Vision"
+    label "[0]" text="[0]" desc="Points spent on Hearing"
+    text-field "Hearing" value="10"
+    label "Hearing" text="Hearing"
+    label "[0]" text="[0]" desc="Points spent on Taste & Smell"
+    text-field "Taste & Smell" value="10"
+    label "Taste & Smell" text="Taste & Smell"
+    label "[0]" text="[0]" desc="Points spent on Touch"
+    text-field "Touch" value="10"
+    label "Touch" text="Touch"
+    label "[0]" text="[0]" desc="Points spent on Basic Speed"
+    text-field "Basic Speed" value="6.25" desc="Includes modifiers from:\nDecreased Basic Speed 3 [-0.75 (-0.25 per level)]"
+    label "Basic Speed" text="Basic Speed" desc="Includes modifiers from:\nDecreased Basic Speed 3 [-0.75 (-0.25 per level)]"
+    label "[0]" text="[0]" desc="Points spent on Basic Move"
+    text-field "Basic Move" value="6"
+    label "Basic Move" text="Basic Move"
+  group "Point Pools"
+    label "[0]" text="[0]" desc="Points spent on Fatigue Points (FP)" [offscreen]
+    text-field "Current Fatigue Points" value="13"
+    label "of" text="of"
+    text-field "Maximum Fatigue Points" value="13" desc="Fatigue Points"
+    label "FP" text="FP" desc="Fatigue Points"
+    label "[Rested]" text="[Rested]"
+    label "[0]" text="[0]" desc="Points spent on Hit Points (HP)" [offscreen]
+    text-field "Current Hit Points" value="15"
+    label "of" text="of"
+    text-field "Maximum Hit Points" value="15" desc="Hit Points"
+    label "HP" text="HP" desc="Hit Points"
+    label "[Healthy]" text="[Healthy]"
+  group "Humanoid"
+    label "Roll" text="Roll"
+    label "Location" text="Location"
+    label "DR" text="DR" desc="Damage Resistance for the hit location"
+    image "Notes for the hit location"
+    label " " text=" "
+    separator
+    label "Eyes" text="Eyes" desc="An attack that misses by 1 hits the torso instead. Only\nimpaling (imp), piercing (pi-, pi, pi+, pi++), and\ntight-beam burning (burn) attacks can target the eye – and\nonly from the front or sides. Injury over HP÷10 blinds the\neye. Otherwise, treat as skull, but without the extra DR!"
+    label "-9" text="-9"
+    separator
+    label "0" text="0" desc="The DR covering the Eyes hit location"
+    separator
+    text-field "Notes for the Eyes hit location"
+    label "3-4" text="3-4"
+    label "Skull" text="Skull" desc="An attack that misses by 1 hits the torso instead. Wounding\nmodifier is x4. Knockdown rolls are at -10. Critical hits\nuse the Critical Head Blow Table (B556). Exception: These\nspecial effects do not apply to toxic (tox) damage."
+    label "-7" text="-7"
+    label "2" text="2" desc="The DR covering the Skull hit location: • DR 2 against all attacks • Skull [+2 against all attacks]"
+    text-field "Notes for the Skull hit location"
+    label "5" text="5"
+    label "Face" text="Face" desc="An attack that misses by 1 hits the torso instead. Jaw,\ncheeks, nose, ears, etc. If the target has an open-faced\nhelmet, ignore its DR. Knockdown rolls are at -5. Critical\nhits use the Critical Head Blow Table (B556). Corrosion\n(cor) damage gets a x1½ wounding modifier, and if it\ninflicts a major wound, it also blinds one eye (both eyes on\ndamage over full HP). Random attacks from behind hit the\nskull instead."
+    label "-5" text="-5"
+    label "0" text="0" desc="The DR covering the Face hit location"
+    text-field "Notes for the Face hit location"
+    label "6-7" text="6-7"
+    label "Right Leg" text="Right Leg" desc="Reduce the wounding multiplier of large piercing (pi+), huge\npiercing (pi++), and impaling (imp) damage to x1. Any major\nwound (loss of over ½ HP from one blow) cripples the limb.\nDamage beyond that threshold is lost."
+    label "-2" text="-2"
+    label "0" text="0" desc="The DR covering the Right Leg hit location"
+    text-field "Notes for the Right Leg hit location"
+    label "8" text="8"
+    label "Right Arm" text="Right Arm" desc="Reduce the wounding multiplier of large piercing (pi+), huge\npiercing (pi++), and impaling (imp) damage to x1. Any major\nwound (loss of over ½ HP from one blow) cripples the limb.\nDamage beyond that threshold is lost. If holding a shield,\ndouble the penalty to hit: -4 for shield arm instead of -2."
+    label "-2" text="-2"
+    label "0" text="0" desc="The DR covering the Right Arm hit location"
+    text-field "Notes for the Right Arm hit location"
+    label "9-10" text="9-10"
+    label "Torso" text="Torso"
+    label "+0" text="+0"
+    label "0" text="0" desc="The DR covering the Torso hit location"
+    text-field "Notes for the Torso hit location"
+    label "11" text="11"
+    label "Groin" text="Groin" desc="An attack that misses by 1 hits the torso instead. Human\nmales and the males of similar species suffer double shock\nfrom crushing (cr) damage, and get -5 to knockdown rolls.\nOtherwise, treat as a torso hit."
+    label "-3" text="-3"
+    label "0" text="0" desc="The DR covering the Groin hit location"
+    text-field "Notes for the Groin hit location"
+    label "12" text="12"
+    label "Left Arm" text="Left Arm" desc="Reduce the wounding multiplier of large piercing (pi+), huge\npiercing (pi++), and impaling (imp) damage to x1. Any major\nwound (loss of over ½ HP from one blow) cripples the limb.\nDamage beyond that threshold is lost. If holding a shield,\ndouble the penalty to hit: -4 for shield arm instead of -2."
+    label "-2" text="-2"
+    label "0" text="0" desc="The DR covering the Left Arm hit location"
+    text-field "Notes for the Left Arm hit location"
+    label "13-14" text="13-14"
+    label "Left Leg" text="Left Leg" desc="Reduce the wounding multiplier of large piercing (pi+), huge\npiercing (pi++), and impaling (imp) damage to x1. Any major\nwound (loss of over ½ HP from one blow) cripples the limb.\nDamage beyond that threshold is lost."
+    label "-2" text="-2"
+    label "0" text="0" desc="The DR covering the Left Leg hit location"
+    text-field "Notes for the Left Leg hit location"
+    label "15" text="15"
+    label "Hand" text="Hand" desc="If holding a shield, double the penalty to hit: -8 for\nshield hand instead of -4. Reduce the wounding multiplier of\nlarge piercing (pi+), huge piercing (pi++), and impaling\n(imp) damage to x1. Any major wound (loss of over ⅓ HP\nfrom one blow) cripples the extremity. Damage beyond that\nthreshold is lost."
+    label "-4" text="-4"
+    label "0" text="0" desc="The DR covering the Hand hit location"
+    text-field "Notes for the Hand hit location"
+    label "16" text="16"
+    label "Foot" text="Foot" desc="Reduce the wounding multiplier of large piercing (pi+), huge\npiercing (pi++), and impaling (imp) damage to x1. Any major\nwound (loss of over ⅓ HP from one blow) cripples the\nextremity. Damage beyond that threshold is lost."
+    label "-4" text="-4"
+    label "0" text="0" desc="The DR covering the Foot hit location"
+    text-field "Notes for the Foot hit location"
+    label "17-18" text="17-18"
+    label "Neck" text="Neck" desc="An attack that misses by 1 hits the torso instead. Neck and\nthroat. Increase the wounding multiplier of crushing (cr)\nand corrosion (cor) attacks to x1½, and that of cutting\n(cut) damage to x2. At the GM’s option, anyone killed by a\ncutting (cut) blow to the neck is decapitated!"
+    label "-5" text="-5"
+    label "0" text="0" desc="The DR covering the Neck hit location"
+    text-field "Notes for the Neck hit location"
+    label " " text=" "
+    label "Vitals" text="Vitals" desc="An attack that misses by 1 hits the torso instead. Heart,\nlungs, kidneys, etc. Increase the wounding modifier for an\nimpaling (imp) or any piercing (pi-, pi, pi+, pi++) attack\nto x3. Increase the wounding modifier for a tight-beam\nburning (burn) attack to x2. Other attacks cannot target the\nvitals."
+    label "-3" text="-3"
+    label "0" text="0" desc="The DR covering the Vitals hit location"
+    text-field "Notes for the Vitals hit location"
+  group "Encumbrance, Move & Dodge"
+    label "Level" text="Level"
+    label "Max Load" text="Max Load" [offscreen]
+    label "Move" text="Move" [offscreen]
+    label "Dodge" text="Dodge" [offscreen]
+    label "0" text="0"
+    label "None" text="None"
+    separator [offscreen]
+    label "45 lb" text="45 lb" desc="The maximum load that can be carried and still remain within the None\nencumbrance level" [offscreen]
+    separator [offscreen]
+    label "6" text="6" desc="The ground movement rate for the None encumbrance level" [offscreen]
+    separator [offscreen]
+    label "10" text="10" desc="The dodge for the None encumbrance level" [offscreen]
+    label "1" text="1"
+    label "Light" text="Light"
+    label "90 lb" text="90 lb" desc="The maximum load that can be carried and still remain within the Light\nencumbrance level" [offscreen]
+    label "4" text="4" desc="The ground movement rate for the Light encumbrance level" [offscreen]
+    label "9" text="9" desc="The dodge for the Light encumbrance level" [offscreen]
+    label "2" text="2"
+    label "Medium" text="Medium"
+    label "135 lb" text="135 lb" desc="The maximum load that can be carried and still remain within the Medium\nencumbrance level" [offscreen]
+    label "3" text="3" desc="The ground movement rate for the Medium encumbrance level" [offscreen]
+    label "8" text="8" desc="The dodge for the Medium encumbrance level" [offscreen]
+    label "3" text="3"
+    label "Heavy" text="Heavy"
+    label "270 lb" text="270 lb" desc="The maximum load that can be carried and still remain within the Heavy\nencumbrance level" [offscreen]
+    label "2" text="2" desc="The ground movement rate for the Heavy encumbrance level" [offscreen]
+    label "7" text="7" desc="The dodge for the Heavy encumbrance level" [offscreen]
+    label "4" text="4"
+    label "X-Heavy" text="X-Heavy"
+    label "450 lb" text="450 lb" desc="The maximum load that can be carried and still remain within the X-Heavy\nencumbrance level" [offscreen]
+    label "1" text="1" desc="The ground movement rate for the X-Heavy encumbrance level" [offscreen]
+    label "6" text="6" desc="The dodge for the X-Heavy encumbrance level" [offscreen]
+  group "Lifting & Moving Things"
+    label "45 lb" text="45 lb" desc="The weight that can be lifted overhead with one hand in one second"
+    label "Basic Lift" text="Basic Lift" desc="The weight that can be lifted overhead with one hand in one second" [offscreen]
+    label "90 lb" text="90 lb" desc="The weight that can be lifted overhead with one hand in two seconds"
+    label "One-Handed Lift" text="One-Handed Lift" desc="The weight that can be lifted overhead with one hand in two seconds" [offscreen]
+    label "360 lb" text="360 lb" desc="The weight that can be lifted overhead with both hands in four seconds"
+    label "Two-Handed Lift" text="Two-Handed Lift" desc="The weight that can be lifted overhead with both hands in four seconds" [offscreen]
+    label "540 lb" text="540 lb" desc="The weight of an object that can be shoved and knocked over"
+    label "Shove & Knock Over" text="Shove & Knock Over" desc="The weight of an object that can be shoved and knocked over" [offscreen]
+    label "1,080 lb" text="1,080 lb" desc="The weight of an object that can be shoved and knocked over with a running start"
+    label "Running Shove & Knock Over" text="Running Shove & Knock Over" desc="The weight of an object that can be shoved and knocked over with a running start" [offscreen]
+    label "675 lb" text="675 lb" desc="The weight that can be carried slung across the back"
+    label "Carry On Back" text="Carry On Back" desc="The weight that can be carried slung across the back" [offscreen]
+    label "2,250 lb" text="2,250 lb" desc="The weight that can be shifted slightly on a floor"
+    label "Shift Slightly" text="Shift Slightly" desc="The weight that can be shifted slightly on a floor" [offscreen]
+  table-header
+    column-header "±" text="±" desc="Modifier"
+    column-header "Condition" text="Condition"
+  table "Conditional Modifiers"
+    row "+3, Condition on all HT rolls to avoid knockdown and stunning"
+      cell
+        group desc="+3 from trait High Pain Threshold"
+          label "+3" text="+3"
+      cell
+        document [readonly]
+          paragraph text="on all HT rolls to avoid knockdown and stunning" [readonly]
+    row "+6, Condition on all IQ rolls to wake up or to recover from surprise or mental stun"
+      cell
+        group desc="+6 from trait Combat Reflexes"
+          label "+6" text="+6"
+      cell
+        document [readonly]
+          paragraph text="on all IQ rolls to wake up or to recover from surprise or mental stun" [readonly]
+    row "+1, Condition to all HT rolls to stay conscious, avoid death, resist disease, resist poison"
+      cell
+        group desc="+1 from trait Fit"
+          label "+1" text="+1"
+      cell
+        document [readonly]
+          paragraph text="to all HT rolls to stay conscious, avoid death, resist disease, resist poison" [readonly]
+    row "+1, Condition to initiative rolls for your side (+2 if you are the leader)"
+      cell
+        group desc="+1 from trait Combat Reflexes"
+          label "+1" text="+1"
+      cell
+        document [readonly]
+          paragraph text="to initiative rolls for your side (+2 if you are the leader)" [readonly]
+    row "+3, Condition to resist torture"
+      cell
+        group desc="+3 from trait High Pain Threshold"
+          label "+3" text="+3"
+      cell
+        document [readonly]
+          paragraph text="to resist torture" [readonly]
+  table-header
+    column-header "Melee Weapon" text="Melee Weapon"
+    column-header "Usage" text="Usage"
+    column-header "SL" text="SL" desc="Skill Level"
+    column-header "Parry" text="Parry"
+    column-header "Block" text="Block" [offscreen]
+    column-header "Damage" text="Damage" [offscreen]
+    column-header "Reach" text="Reach" [offscreen]
+    column-header "ST" text="ST" desc="Minimum Strength" [offscreen]
+  table "Melee Weapons"
+    row "Natural Attacks, Usage Bite, SL 16, Parry No, Block No, Damage 1d cr, Reach C"
+      cell
+        label "Natural Attacks" text="Natural Attacks"
+      cell
+        label "Bite" text="Bite"
+      cell
+        label "16" text="16"
+      cell
+        label "No" text="No"
+      cell [offscreen]
+        label "No" text="No" [offscreen]
+      cell [offscreen]
+        label "1d cr" text="1d cr" [offscreen]
+      cell [offscreen]
+        label "C" text="C" [offscreen]
+      cell [offscreen]
+    row "Natural Attacks, Usage Kick, SL 14, Parry No, Block No, Damage 1d+1 cr, Reach C,1"
+      cell
+        label "Natural Attacks" text="Natural Attacks"
+      cell
+        label "Kick" text="Kick"
+      cell
+        label "14" text="14"
+      cell
+        label "No" text="No"
+      cell [offscreen]
+        label "No" text="No" [offscreen]
+      cell [offscreen]
+        label "1d+1 cr" text="1d+1 cr" [offscreen]
+      cell [offscreen]
+        label "C,1" text="C,1" [offscreen]
+      cell [offscreen]
+    row "Natural Attacks, Usage Punch, SL 16, Parry 12, Block No, Damage 1d cr, Reach C"
+      cell
+        label "Natural Attacks" text="Natural Attacks"
+      cell
+        label "Punch" text="Punch"
+      cell
+        label "16" text="16"
+      cell
+        group desc="Includes modifiers from: Combat Reflexes [+1]"
+          label "12" text="12"
+      cell [offscreen]
+        label "No" text="No" [offscreen]
+      cell [offscreen]
+        label "1d cr" text="1d cr" [offscreen]
+      cell [offscreen]
+        label "C" text="C" [offscreen]
+      cell [offscreen]
+  table-header
+    column-header "Trait" text="Trait"
+    column-header "Pts" text="Pts" desc="Points"
+    column-header "A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22"
+    column-header "Indicates whether the data matches the source library it came from"
+  tree "Traits"
+    row "Natural Attacks, Pts 0, A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22 B271, Indicates whether the data matches the source library it came from —"
+      cell
+        label "Natural Attacks" text="Natural Attacks"
+      cell
+        label "0" text="0"
+      cell
+        link "B271"
+      cell
+        group desc="Custom data which did not come from a library source"
+          label "—" text="—"
+    row "Knight, Pts 195, A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22 DFA27, Indicates whether the data matches the source library it came from —" [selected] [expanded]
+      disclosure-triangle "Disclosure Triangle" [pressed] [offscreen] [expanded]
+      cell
+        label "Knight" text="Knight"
+      cell
+        label "195" text="195"
+      cell
+        link "DFA27"
+      cell
+        group desc="Custom data which did not come from a library source"
+          label "—" text="—"
+    row "Attributes, Pts 150, Indicates whether the data matches the source library it came from —" [expanded]
+      disclosure-triangle "Disclosure Triangle" [pressed] [expanded]
+      cell
+        label "Attributes" text="Attributes"
+      cell
+        label "150" text="150"
+      cell
+      cell
+        group desc="Custom data which did not come from a library source"
+          label "—" text="—"
+    row "Increased Strength 4, Pts 40, A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22 DFA8, Indicates whether the data matches the source library it came from —"
+      cell
+        label "Increased Strength 4" text="Increased Strength 4"
+      cell
+        label "40" text="40"
+      cell
+        link "DFA8"
+      cell
+        group desc="Custom data which did not come from a library source"
+          label "—" text="—"
+    row "Increased Dexterity 4, Pts 80, A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22 DFA8, Indicates whether the data matches the source library it came from —"
+      cell
+        label "Increased Dexterity 4" text="Increased Dexterity 4"
+      cell
+        label "80" text="80"
+      cell
+        link "DFA8"
+      cell
+        group desc="Custom data which did not come from a library source"
+          label "—" text="—"
+    row "Increased Health 3, Pts 30, A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22 DFA8, Indicates whether the data matches the source library it came from —"
+      cell
+        label "Increased Health 3" text="Increased Health 3"
+      cell
+        label "30" text="30"
+      cell
+        link "DFA8"
+      cell
+        group desc="Custom data which did not come from a library source"
+          label "—" text="—"
+    row "Secondary Characteristics, Pts -15, Indicates whether the data matches the source library it came from —" [expanded]
+      disclosure-triangle "Disclosure Triangle" [pressed] [expanded]
+      cell
+        label "Secondary Characteristics" text="Secondary Characteristics"
+      cell
+        label "-15" text="-15"
+      cell
+      cell
+        group desc="Custom data which did not come from a library source"
+          label "—" text="—"
+    row "Decreased Basic Speed 3, Pts -15, A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22 DFA11, Indicates whether the data matches the source library it came from —"
+      cell
+        label "Decreased Basic Speed 3" text="Decreased Basic Speed 3"
+      cell
+        label "-15" text="-15"
+      cell
+        link "DFA11"
+      cell
+        group desc="Custom data which did not come from a library source"
+          label "—" text="—"
+    row "Class Advantages, Pts 95, Indicates whether the data matches the source library it came from —" [expanded]
+      disclosure-triangle "Disclosure Triangle" [pressed] [expanded]
+      cell
+        label "Class Advantages" text="Class Advantages"
+      cell
+        label "95" text="95"
+      cell
+      cell
+        group desc="Custom data which did not come from a library source"
+          label "—" text="—"
+    row "Born War Leader 2, Pts 10, A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22 DFA47, Indicates whether the data matches the source library it came from —"
+      cell
+        label "Born War Leader 2" text="Born War Leader 2"
+      cell
+        label "10" text="10"
+      cell
+        link "DFA47"
+      cell
+        group desc="Custom data which did not come from a library source"
+          label "—" text="—"
+    row "Combat Reflexes\nNever freeze, Pts 15, A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22 DFA48, Indicates whether the data matches the source library it came from —" [offscreen]
+      cell [offscreen]
+        label "Combat Reflexes" text="Combat Reflexes" [offscreen]
+        button "Hide notes" [offscreen]
+        document [readonly] [offscreen]
+          paragraph text="Never freeze" [readonly] [offscreen]
+      cell [offscreen]
+        label "15" text="15" [offscreen]
+      cell [offscreen]
+        link "DFA48" [offscreen]
+      cell [offscreen]
+        group desc="Custom data which did not come from a library source" [offscreen]
+          label "—" text="—" [offscreen]
+    row "High Pain Threshold\nNever suffer shock penalties when injured, Pts 10, A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22 DFA50, Indicates whether the data matches the source library it came from —" [offscreen]
+      cell [offscreen]
+        label "High Pain Threshold" text="High Pain Threshold" [offscreen]
+        button "Hide notes" [offscreen]
+        document [readonly] [offscreen]
+          paragraph text="Never suffer shock penalties when injured" [readonly] [offscreen]
+      cell [offscreen]
+        label "10" text="10" [offscreen]
+      cell [offscreen]
+        link "DFA50" [offscreen]
+      cell [offscreen]
+        group desc="Custom data which did not come from a library source" [offscreen]
+          label "—" text="—" [offscreen]
+    row "Increased Strength 1, Pts 10, A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22 DFA8, Indicates whether the data matches the source library it came from —" [offscreen]
+      cell [offscreen]
+        label "Increased Strength 1" text="Increased Strength 1" [offscreen]
+      cell [offscreen]
+        label "10" text="10" [offscreen]
+      cell [offscreen]
+        link "DFA8" [offscreen]
+      cell [offscreen]
+        group desc="Custom data which did not come from a library source" [offscreen]
+          label "—" text="—" [offscreen]
+    row "Increased Dexterity 1, Pts 20, A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22 DFA8, Indicates whether the data matches the source library it came from —" [offscreen]
+      cell [offscreen]
+        label "Increased Dexterity 1" text="Increased Dexterity 1" [offscreen]
+      cell [offscreen]
+        label "20" text="20" [offscreen]
+      cell [offscreen]
+        link "DFA8" [offscreen]
+      cell [offscreen]
+        group desc="Custom data which did not come from a library source" [offscreen]
+          label "—" text="—" [offscreen]
+    row "Extra Attack 1, Pts 25, A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22 DFA49, Indicates whether the data matches the source library it came from —" [offscreen]
+      cell [offscreen]
+        label "Extra Attack 1" text="Extra Attack 1" [offscreen]
+      cell [offscreen]
+        label "25" text="25" [offscreen]
+      cell [offscreen]
+        link "DFA49" [offscreen]
+      cell [offscreen]
+        group desc="Custom data which did not come from a library source" [offscreen]
+          label "—" text="—" [offscreen]
+    row "Fit\nRecover FP at twice the normal rate (but not FP spent for spells or psi powers), Pts 5, A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22 DFA49, Indicates whether the data matches the source library it came from —" [offscreen]
+      cell [offscreen]
+        label "Fit" text="Fit" [offscreen]
+        button "Hide notes" [offscreen]
+        document [readonly] [offscreen]
+          paragraph text="Recover FP at twice the normal rate (but not FP spent for spells or psi powers)" [readonly] [offscreen]
+      cell [offscreen]
+        label "5" text="5" [offscreen]
+      cell [offscreen]
+        link "DFA49" [offscreen]
+      cell [offscreen]
+        group desc="Custom data which did not come from a library source" [offscreen]
+          label "—" text="—" [offscreen]
+  table-header
+    column-header "Skill / Technique" text="Skill / Technique"
+    column-header "SL" text="SL" desc="Skill Level" [offscreen]
+    column-header "RSL" text="RSL" desc="Relative Skill Level" [offscreen]
+    column-header "Pts" text="Pts" desc="Points" [offscreen]
+    column-header "A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22" [offscreen]
+    column-header "Indicates whether the data matches the source library it came from" [offscreen]
+  tree "Skills"
+    row "Knight, Pts 55, Indicates whether the data matches the source library it came from —" [selected] [expanded]
+      disclosure-triangle "Disclosure Triangle" [pressed] [expanded]
+      cell
+        label "Knight" text="Knight"
+      cell [offscreen]
+      cell [offscreen]
+      cell [offscreen]
+        label "55" text="55" [offscreen]
+      cell [offscreen]
+      cell [offscreen]
+        group desc="Custom data which did not come from a library source" [offscreen]
+          label "—" text="—" [offscreen]
+    row "Broadsword, SL 21, RSL DX+6, Pts 24, A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22 DFA81, Indicates whether the data matches the source library it came from —"
+      cell
+        label "Broadsword" text="Broadsword"
+      cell [offscreen]
+        label "21" text="21" [offscreen]
+      cell [offscreen]
+        label "DX+6" text="DX+6" [offscreen]
+      cell [offscreen]
+        label "24" text="24" [offscreen]
+      cell [offscreen]
+        link "DFA81" [offscreen]
+      cell [offscreen]
+        group desc="Custom data which did not come from a library source" [offscreen]
+          label "—" text="—" [offscreen]
+    row "Crossbow, SL 17, RSL DX+2, Pts 4, A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22 DFA83, Indicates whether the data matches the source library it came from —"
+      cell
+        label "Crossbow" text="Crossbow"
+      cell [offscreen]
+        label "17" text="17" [offscreen]
+      cell [offscreen]
+        label "DX+2" text="DX+2" [offscreen]
+      cell [offscreen]
+        label "4" text="4" [offscreen]
+      cell [offscreen]
+        link "DFA83" [offscreen]
+      cell [offscreen]
+        group desc="Custom data which did not come from a library source" [offscreen]
+          label "—" text="—" [offscreen]
+    row "Shield (Shield), SL 17, RSL DX+2, Pts 4, A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22 DFA88, Indicates whether the data matches the source library it came from —"
+      cell
+        label "Shield (Shield)" text="Shield (Shield)"
+      cell [offscreen]
+        label "17" text="17" [offscreen]
+      cell [offscreen]
+        label "DX+2" text="DX+2" [offscreen]
+      cell [offscreen]
+        label "4" text="4" [offscreen]
+      cell [offscreen]
+        link "DFA88" [offscreen]
+      cell [offscreen]
+        group desc="Custom data which did not come from a library source" [offscreen]
+          label "—" text="—" [offscreen]
+    row "Mandatory Skills, Pts 10, Indicates whether the data matches the source library it came from —" [expanded]
+      disclosure-triangle "Disclosure Triangle" [pressed] [expanded]
+      cell
+        label "Mandatory Skills" text="Mandatory Skills"
+      cell [offscreen]
+      cell [offscreen]
+      cell [offscreen]
+        label "10" text="10" [offscreen]
+      cell [offscreen]
+      cell [offscreen]
+        group desc="Custom data which did not come from a library source" [offscreen]
+          label "—" text="—" [offscreen]
+    row "Connoisseur (Weapons), SL 12, RSL IQ+2, Pts 2, A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22 DFA74, Indicates whether the data matches the source library it came from —"
+      cell
+        group desc="Includes modifiers from: Born War Leader 2 [+2 (+1 per level)]"
+          label "Connoisseur " text="Connoisseur "
+          label "(Weapons)" text="(Weapons)"
+      cell [offscreen]
+        group desc="Includes modifiers from: Born War Leader 2 [+2 (+1 per level)]" [offscreen]
+          label "12" text="12" [offscreen]
+      cell [offscreen]
+        group desc="Includes modifiers from: Born War Leader 2 [+2 (+1 per level)]" [offscreen]
+          label "IQ+2" text="IQ+2" [offscreen]
+      cell [offscreen]
+        label "2" text="2" [offscreen]
+      cell [offscreen]
+        link "DFA74" [offscreen]
+      cell [offscreen]
+        group desc="Custom data which did not come from a library source" [offscreen]
+          label "—" text="—" [offscreen]
+    row "Knife, SL 15, RSL DX, Pts 1, A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22 DFA81, Indicates whether the data matches the source library it came from —"
+      cell
+        label "Knife" text="Knife"
+      cell [offscreen]
+        label "15" text="15" [offscreen]
+      cell [offscreen]
+        label "DX" text="DX" [offscreen]
+      cell [offscreen]
+        label "1" text="1" [offscreen]
+      cell [offscreen]
+        link "DFA81" [offscreen]
+      cell [offscreen]
+        group desc="Custom data which did not come from a library source" [offscreen]
+          label "—" text="—" [offscreen]
+    row "Fast-Draw (Broadsword), SL 16, RSL DX+1, Pts 1, A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22 DFA76, Indicates whether the data matches the source library it came from —"
+      cell
+        group desc="Includes modifiers from: Combat Reflexes [+1]"
+          label "Fast-Draw " text="Fast-Draw "
+          label "(Broadsword)" text="(Broadsword)"
+      cell [offscreen]
+        group desc="Includes modifiers from: Combat Reflexes [+1]" [offscreen]
+          label "16" text="16" [offscreen]
+      cell [offscreen]
+        group desc="Includes modifiers from: Combat Reflexes [+1]" [offscreen]
+          label "DX+1" text="DX+1" [offscreen]
+      cell [offscreen]
+        label "1" text="1" [offscreen]
+      cell [offscreen]
+        link "DFA76" [offscreen]
+      cell [offscreen]
+        group desc="Custom data which did not come from a library source" [offscreen]
+          label "—" text="—" [offscreen]
+    row "Leadership, SL 12, RSL IQ+2, Pts 2, A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22 DFA80, Indicates whether the data matches the source library it came from —" [offscreen]
+      cell [offscreen]
+        group desc="Includes modifiers from: Born War Leader 2 [+2 (+1 per level)]" [offscreen]
+          label "Leadership" text="Leadership" [offscreen]
+      cell [offscreen]
+        group desc="Includes modifiers from: Born War Leader 2 [+2 (+1 per level)]" [offscreen]
+          label "12" text="12" [offscreen]
+      cell [offscreen]
+        group desc="Includes modifiers from: Born War Leader 2 [+2 (+1 per level)]" [offscreen]
+          label "IQ+2" text="IQ+2" [offscreen]
+      cell [offscreen]
+        label "2" text="2" [offscreen]
+      cell [offscreen]
+        link "DFA80" [offscreen]
+      cell [offscreen]
+        group desc="Custom data which did not come from a library source" [offscreen]
+          label "—" text="—" [offscreen]
+    row "Strategy, SL 11, RSL IQ+1, Pts 2, A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22 DFA90, Indicates whether the data matches the source library it came from —" [offscreen]
+      cell [offscreen]
+        group desc="Includes modifiers from: Born War Leader 2 [+2 (+1 per level)]" [offscreen]
+          label "Strategy" text="Strategy" [offscreen]
+      cell [offscreen]
+        group desc="Includes modifiers from: Born War Leader 2 [+2 (+1 per level)]" [offscreen]
+          label "11" text="11" [offscreen]
+      cell [offscreen]
+        group desc="Includes modifiers from: Born War Leader 2 [+2 (+1 per level)]" [offscreen]
+          label "IQ+1" text="IQ+1" [offscreen]
+      cell [offscreen]
+        label "2" text="2" [offscreen]
+      cell [offscreen]
+        link "DFA90" [offscreen]
+      cell [offscreen]
+        group desc="Custom data which did not come from a library source" [offscreen]
+          label "—" text="—" [offscreen]
+    row "Tactics, SL 11, RSL IQ+1, Pts 2, A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22 DFA91, Indicates whether the data matches the source library it came from —" [offscreen]
+      cell [offscreen]
+        group desc="Includes modifiers from: Born War Leader 2 [+2 (+1 per level)]" [offscreen]
+          label "Tactics" text="Tactics" [offscreen]
+      cell [offscreen]
+        group desc="Includes modifiers from: Born War Leader 2 [+2 (+1 per level)]" [offscreen]
+          label "11" text="11" [offscreen]
+      cell [offscreen]
+        group desc="Includes modifiers from: Born War Leader 2 [+2 (+1 per level)]" [offscreen]
+          label "IQ+1" text="IQ+1" [offscreen]
+      cell [offscreen]
+        label "2" text="2" [offscreen]
+      cell [offscreen]
+        link "DFA91" [offscreen]
+      cell [offscreen]
+        group desc="Custom data which did not come from a library source" [offscreen]
+          label "—" text="—" [offscreen]
+    row "Brawling, SL 16, RSL DX+1, Pts 2, A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22 DFA93, Indicates whether the data matches the source library it came from —" [offscreen]
+      cell [offscreen]
+        label "Brawling" text="Brawling" [offscreen]
+      cell [offscreen]
+        label "16" text="16" [offscreen]
+      cell [offscreen]
+        label "DX+1" text="DX+1" [offscreen]
+      cell [offscreen]
+        label "2" text="2" [offscreen]
+      cell [offscreen]
+        link "DFA93" [offscreen]
+      cell [offscreen]
+        group desc="Custom data which did not come from a library source" [offscreen]
+          label "—" text="—" [offscreen]
+    row "Armory (Melee Weapons), SL 11, RSL IQ+1, Pts 4, A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22 DFA73, Indicates whether the data matches the source library it came from —" [offscreen]
+      cell [offscreen]
+        label "Armory (Melee " text="Armory (Melee " [offscreen]
+        label "Weapons)" text="Weapons)" [offscreen]
+      cell [offscreen]
+        label "11" text="11" [offscreen]
+      cell [offscreen]
+        label "IQ+1" text="IQ+1" [offscreen]
+      cell [offscreen]
+        label "4" text="4" [offscreen]
+      cell [offscreen]
+        link "DFA73" [offscreen]
+      cell [offscreen]
+        group desc="Custom data which did not come from a library source" [offscreen]
+          label "—" text="—" [offscreen]
+    row "Wrestling, SL 15, RSL DX, Pts 2, A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22 DFA93, Indicates whether the data matches the source library it came from —" [offscreen]
+      cell [offscreen]
+        label "Wrestling" text="Wrestling" [offscreen]
+      cell [offscreen]
+        label "15" text="15" [offscreen]
+      cell [offscreen]
+        label "DX" text="DX" [offscreen]
+      cell [offscreen]
+        label "2" text="2" [offscreen]
+      cell [offscreen]
+        link "DFA93" [offscreen]
+      cell [offscreen]
+        group desc="Custom data which did not come from a library source" [offscreen]
+          label "—" text="—" [offscreen]
+    row "First Aid, SL 10, RSL IQ, Pts 1, A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22 DFA76, Indicates whether the data matches the source library it came from —" [offscreen]
+      cell [offscreen]
+        label "First Aid" text="First Aid" [offscreen]
+      cell [offscreen]
+        label "10" text="10" [offscreen]
+      cell [offscreen]
+        label "IQ" text="IQ" [offscreen]
+      cell [offscreen]
+        label "1" text="1" [offscreen]
+      cell [offscreen]
+        link "DFA76" [offscreen]
+      cell [offscreen]
+        group desc="Custom data which did not come from a library source" [offscreen]
+          label "—" text="—" [offscreen]
+    row "Heraldry, SL 9, RSL IQ-1, Pts 1, A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22 DFA77, Indicates whether the data matches the source library it came from —" [offscreen]
+      cell [offscreen]
+        label "Heraldry" text="Heraldry" [offscreen]
+      cell [offscreen]
+        label "9" text="9" [offscreen]
+      cell [offscreen]
+        label "IQ-1" text="IQ-1" [offscreen]
+      cell [offscreen]
+        label "1" text="1" [offscreen]
+      cell [offscreen]
+        link "DFA77" [offscreen]
+      cell [offscreen]
+        group desc="Custom data which did not come from a library source" [offscreen]
+          label "—" text="—" [offscreen]
+  table-header [offscreen]
+    column-header "Spell" text="Spell" [offscreen]
+    column-header "SL" text="SL" desc="Skill Level" [offscreen]
+    column-header "RSL" text="RSL" desc="Relative Skill Level" [offscreen]
+    column-header "Pts" text="Pts" desc="Points" [offscreen]
+    column-header "A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22" [offscreen]
+    column-header "Indicates whether the data matches the source library it came from" [offscreen]
+  table "Spells" [offscreen]
+  table-header [offscreen]
+    column-header "Whether this piece of equipment is equipped or just carried. Items that are not\nequipped do not apply any features they may normally contribute to the\ncharacter." [offscreen]
+    column-header "#" text="#" desc="Quantity" [offscreen]
+    column-header "Carried Equipment (0 lb; $0)" text="Carried Equipment (0 lb; $0)" [offscreen]
+    column-header "TL" text="TL" desc="Tech Level" [offscreen]
+    column-header "LC" text="LC" desc="Legality Class" [offscreen]
+    column-header "The value of one of these pieces of equipment" [offscreen]
+    column-header "The weight of one of these pieces of equipment" [offscreen]
+    column-header "The value of all of these pieces of equipment, plus the value of any contained\nequipment" [offscreen]
+    column-header "The weight of all of these pieces of equipment, plus the weight of any contained\nequipment" [offscreen]
+    column-header "A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22" [offscreen]
+    column-header "Indicates whether the data matches the source library it came from" [offscreen]
+  table "Carried Equipment Items" [offscreen]
+  table-header [offscreen]
+    column-header "#" text="#" desc="Quantity" [offscreen]
+    column-header "Other Equipment (0 lb; $0)" text="Other Equipment (0 lb; $0)" [offscreen]
+    column-header "TL" text="TL" desc="Tech Level" [offscreen]
+    column-header "LC" text="LC" desc="Legality Class" [offscreen]
+    column-header "The value of one of these pieces of equipment" [offscreen]
+    column-header "The weight of one of these pieces of equipment" [offscreen]
+    column-header "The value of all of these pieces of equipment, plus the value of any contained\nequipment" [offscreen]
+    column-header "The weight of all of these pieces of equipment, plus the weight of any contained\nequipment" [offscreen]
+    column-header "A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22" [offscreen]
+    column-header "Indicates whether the data matches the source library it came from" [offscreen]
+  table "Other Equipment Items" [offscreen]
+  table-header [offscreen]
+    column-header "Note" text="Note" [offscreen]
+    column-header "A reference to the book and page the item appears on e.g. B22 would refer to\n\"Basic Set\", page 22" [offscreen]
+    column-header "Indicates whether the data matches the source library it came from" [offscreen]
+  table "Notes" [offscreen]

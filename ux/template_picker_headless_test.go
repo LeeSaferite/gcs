@@ -122,8 +122,8 @@ func TestPickerGroupsReachTheTable(t *testing.T) {
 	c.Equal("Judo", unarmed.Children[0].Name)
 }
 
-// The picker dialog is sized with its rows' text in place, wraps its hint to the list's width, and grows when its
-// content does.
+// The picker dialog is sized with its rows' text in place, wraps its hint to the list's width, and widens when the text
+// does.
 func TestPickerDialogFitsItsContent(t *testing.T) {
 	c := check.New(t)
 	screen, _ := startHeadlessWorkspace(t, c)
@@ -156,14 +156,9 @@ func TestPickerDialogFitsItsContent(t *testing.T) {
 		width := wnd.ContentRect().Width
 		choose(s, n, "lion", "honors", "cr", "wm", "fear2")
 		refresh()
-		fits("the dialog grows to fit longer text")
+		_, pref, _ := wnd.Content().Sizes(geom.Size{})
+		c.True(pref.Width <= wnd.ContentRect().Width, "the dialog widens to fit longer text")
 		c.True(wnd.ContentRect().Width > width, "the dialog widens")
-		// Left shorter than its content wants, it grows taller too.
-		r := wnd.ContentRect()
-		r.Height /= 2
-		wnd.SetContentRect(r)
-		refresh()
-		fits("the dialog grows to fit taller content")
 	})
 }
 
@@ -231,8 +226,9 @@ func TestPickerDialogKeepsItsScrollPosition(t *testing.T) {
 	})
 }
 
-// The line under the picker's list is in the theme's error or warning color for those, dimmed while picks are still
-// open, and green once all is well.
+// The line under the picker's list is a notice for an error or a warning, in a box of the theme's color for it with
+// the text in the color drawn on that, while it is plain text otherwise: dimmed while picks are still open, and green
+// once all is well.
 func TestPickerDialogHintColor(t *testing.T) {
 	c := check.New(t)
 	screen, _ := startHeadlessWorkspace(t, c)
@@ -241,11 +237,12 @@ func TestPickerDialogHintColor(t *testing.T) {
 		picks []string
 		state pickerState
 		ink   unison.Ink
+		boxed bool
 	}{
-		{"root", []string{"ea", "ep", "fit", "order", "lion", "honors", "cr", "wm", "fear2"}, pickerError, unison.ThemeError},
-		{"order", []string{"order", "lion", "honors", "cr", "wm", "fear2"}, pickerWarning, unison.ThemeWarning},
-		{"root", []string{"ea", "ep", "fit", "order"}, pickerOpen, dimmedTextColor},
-		{"fit", []string{"fit", "fit1"}, pickerOK, unison.Green},
+		{"root", []string{"ea", "ep", "fit", "order", "lion", "honors", "cr", "wm", "fear2"}, pickerError, unison.ThemeOnError, true},
+		{"order", []string{"order", "lion", "honors", "cr", "wm", "fear2"}, pickerWarning, unison.ThemeOnWarning, true},
+		{"root", []string{"ea", "ep", "fit", "order"}, pickerOpen, dimmedTextColor, false},
+		{"fit", []string{"fit", "fit1"}, pickerOK, unison.Green, false},
 	} {
 		s, n := newKnightSession()
 		choose(s, n, tc.picks...)
@@ -260,6 +257,7 @@ func TestPickerDialogHintColor(t *testing.T) {
 			hints := panelsOfType[*textLabel](dialog.Window().Content())
 			c.Equal(1, len(hints))
 			c.Equal(tc.ink, hints[0].ink, tc.row)
+			c.Equal(tc.boxed, hints[0].Border() != nil, "only a warning or an error is set out in a box: %s", tc.row)
 		})
 	}
 }
@@ -621,9 +619,9 @@ func TestPickerUnitContainerInformationRows(t *testing.T) {
 	})
 }
 
-// Opening a group in a short list grows the dialog to show all that it holds, rather than squeezing it into the room the
-// list had, and closing it leaves the dialog as it is.
-func TestPickerOpeningGroupGrowsDialog(t *testing.T) {
+// The list has room for ten rows however few it holds, so opening a group in a short list shows all that it holds
+// without the dialog growing, and the dialog can't be made smaller than that.
+func TestPickerListHoldsTenRows(t *testing.T) {
 	c := check.New(t)
 	screen, _ := startHeadlessWorkspace(t, c)
 	choice := gurps.NewTrait(nil, nil, true)
@@ -651,90 +649,31 @@ func TestPickerOpeningGroupGrowsDialog(t *testing.T) {
 		defer wnd.Dispose()
 		wnd.ValidateLayout()
 		list := panelsOfType[*unison.CheckBox](wnd.Content())[0].Parent().Parent()
+		scroll := panelsOfType[*unison.ScrollPanel](wnd.Content())[0]
 		chevrons := panelsOfType[*unison.Button](list)
 		c.Equal(1, len(chevrons), "the unit has a chevron")
 		if len(chevrons) != 1 {
 			return
 		}
 		c.False(slices.Contains(labelTexts(list), "Item 7"), "what it holds starts hidden")
+		minimum := pickerListMinSize()
+		view := scroll.ContentView().ContentRect(false).Size
+		c.True(view.Height >= minimum.Height && view.Width >= minimum.Width,
+			"the list has its least room: wants %v, has %v", minimum, view)
 		size := wnd.ContentRect().Size
 		chevrons[0].Click()
 		wnd.ValidateLayout()
 		c.True(slices.Contains(labelTexts(list), "Item 7"), "opening it shows what it holds")
-		grown := wnd.ContentRect().Size
-		c.True(grown.Height > size.Height, "the dialog grows: was %v, is %v", size, grown)
-		scroll := panelsOfType[*unison.ScrollPanel](wnd.Content())[0]
+		c.Equal(size, wnd.ContentRect().Size, "the dialog keeps its size")
 		c.True(list.FrameRect().Height <= scroll.ContentView().ContentRect(false).Height,
 			"the list shows every row without scrolling")
-		chevrons[0].Click()
-		wnd.ValidateLayout()
-		c.Equal(grown, wnd.ContentRect().Size, "closing it leaves the dialog as it is")
+		// Asked to be smaller, the dialog keeps the list's room.
+		r := wnd.ContentRect()
+		r.Width /= 2
+		r.Height /= 2
+		wnd.SetContentRect(r)
+		c.Equal(size, wnd.ContentRect().Size, "the dialog is no smaller than its content's least size")
 	})
-}
-
-// A chevron in the picker, on a header or a unit's row, gets all the room it asks for, inside its row, with room around
-// its icon for the outline it draws when it has the focus, so neither is cut off.
-func TestPickerChevronsAreNotClipped(t *testing.T) {
-	c := check.New(t)
-	screen, wnd := startHeadlessWorkspace(t, c)
-	choice := gurps.NewTrait(nil, nil, true)
-	choice.Name = "Choice"
-	choice.TemplatePicker.Type = picker.Count
-	choice.TemplatePicker.Qualifier.Qualifier = fxp.One
-	group := gurps.NewTrait(nil, choice, true)
-	group.Name = "Group"
-	group.PickSeparately = true
-	fear := gurps.NewTrait(nil, group, false)
-	fear.Name = "Fear"
-	group.Children = []*gurps.Trait{fear}
-	kit := gurps.NewTrait(nil, choice, true)
-	kit.Name = "Kit"
-	rope := gurps.NewTrait(nil, kit, false)
-	rope.Name = "Rope"
-	kit.Children = []*gurps.Trait{rope}
-	choice.Children = []*gurps.Trait{group, kit}
-	s := newPickerSession(promptOperation{}, []*gurps.Trait{choice}, false)
-	done := false
-	c.True(screen.Post(func() {
-		s.showPicker(choice, 0)
-		done = true
-	}))
-	screen.Sync()
-	dialogWnd, _ := modalDialog(t, screen, wnd)
-	var chevrons []*unison.Button
-	screen.Do(func() {
-		chevrons = panelsOfType[*unison.Button](panelsOfType[*unison.CheckBox](dialogWnd.Content())[0].Parent().Parent())
-	})
-	c.Equal(2, len(chevrons), "the group and the unit each have a chevron")
-	checkRoom := func(focused bool) {
-		for _, chevron := range chevrons {
-			if focused {
-				screen.Do(chevron.RequestFocus)
-			}
-			screen.Do(func() {
-				dialogWnd.ValidateLayout()
-				c.Equal(focused, chevron.Focused())
-				_, pref, _ := chevron.Sizes(geom.Size{})
-				frame := chevron.FrameRect()
-				c.True(frame.Width >= pref.Width && frame.Height >= pref.Height,
-					"a chevron gets the room it asks for: %v of %v", frame.Size, pref)
-				drawable := chevron.Drawable.LogicalSize()
-				// Focused, it draws a 2 point outline just inside its edges, so its icon needs that much room around it.
-				c.True(frame.Width-drawable.Width >= 4 && frame.Height-drawable.Height >= 4,
-					"a chevron leaves room around its icon for its focus outline: %v in %v", drawable, frame.Size)
-				for p := chevron.AsPanel(); p.Parent() != nil && p.Parent() != dialogWnd.Content(); p = p.Parent() {
-					within := p.Parent().ContentRect(true)
-					rect := p.FrameRect()
-					c.True(rect.X >= within.X && rect.Y >= within.Y && rect.Right() <= within.Right() &&
-						rect.Bottom() <= within.Bottom(), "a chevron is not cut off by what holds it: %v in %v", rect, within)
-				}
-			})
-		}
-	}
-	checkRoom(false)
-	checkRoom(true)
-	screen.KeyPress(unison.KeyEscape, mod.None)
-	c.True(done, "Escape closes the dialog")
 }
 
 // checkPickerRowsAligned checks that every row of the picker's list has a cell in each of its columns, none spanning

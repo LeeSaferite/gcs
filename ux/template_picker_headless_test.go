@@ -312,7 +312,12 @@ func TestModifierPromptListHoldsTenRows(t *testing.T) {
 	captureScreen(t, c, screen, "modifier_prompt")
 	screen.Do(func() {
 		scroll := panelsOfType[*unison.ScrollPanel](dialogWnd.Content())[0]
-		minimum := scroll.Layout().(*minSizeLayout).minimum
+		layout, ok := scroll.Layout().(*minSizeLayout)
+		c.True(ok, "the list's scroll panel holds its least size")
+		if !ok {
+			return
+		}
+		minimum := layout.minimum
 		view := scroll.ContentView().ContentRect(false).Size
 		c.True(view.Height >= minimum.Height && view.Width >= minimum.Width,
 			"the list has its least room: wants %v, has %v", minimum, view)
@@ -691,7 +696,12 @@ func TestPickerListHoldsTenRows(t *testing.T) {
 			return
 		}
 		c.False(slices.Contains(labelTexts(list), "Item 7"), "what it holds starts hidden")
-		minimum := scroll.Layout().(*minSizeLayout).minimum
+		layout, ok := scroll.Layout().(*minSizeLayout)
+		c.True(ok, "the list's scroll panel holds its least size")
+		if !ok {
+			return
+		}
+		minimum := layout.minimum
 		view := scroll.ContentView().ContentRect(false).Size
 		c.True(view.Height >= minimum.Height && view.Width >= minimum.Width,
 			"the list has its least room: wants %v, has %v", minimum, view)

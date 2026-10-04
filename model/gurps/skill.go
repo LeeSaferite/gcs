@@ -630,23 +630,29 @@ func (s *Skill) String() string {
 			buffer.WriteString("/TL")
 			buffer.WriteString(*s.TechLevel)
 		}
-		specialization := s.SpecializationWithReplacements()
-		optionalSpecialization := s.OptionalSpecializationWithReplacements()
-		if specialization != "" || optionalSpecialization != "" {
-			buffer.WriteString(" (")
-			if specialization != "" {
-				buffer.WriteString(specialization)
-				if optionalSpecialization != "" {
-					buffer.WriteString(", ")
-				}
-			}
-			if optionalSpecialization != "" {
-				buffer.WriteString(optionalSpecialization)
-			}
-			buffer.WriteByte(')')
+	}
+	writeParenthetical(&buffer, s.parentheticalParts())
+	return buffer.String()
+}
+
+// parentheticalParts returns what goes in the parentheses after the skill's name: its specializations, when it is not a
+// container, between the title notes placed before them and the rest of its title notes.
+func (s *Skill) parentheticalParts() []string {
+	parts := appendTitleNotes(nil, s.Replacements, true, s.Features)
+	if !s.Container() {
+		if specialization := s.SpecializationWithReplacements(); specialization != "" {
+			parts = append(parts, specialization)
+		}
+		if optionalSpecialization := s.OptionalSpecializationWithReplacements(); optionalSpecialization != "" {
+			parts = append(parts, optionalSpecialization)
 		}
 	}
-	return buffer.String()
+	return appendTitleNotes(parts, s.Replacements, false, s.Features)
+}
+
+// TitleNotes returns the text of the skill's title note features, those placed before the built-in parts first.
+func (s *Skill) TitleNotes() []string {
+	return appendTitleNotes(appendTitleNotes(nil, s.Replacements, true, s.Features), s.Replacements, false, s.Features)
 }
 
 // IsLeveled implements LeveledOwner.

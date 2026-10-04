@@ -474,6 +474,16 @@ func (p *featuresPanel) editor(f gurps.Feature, path string) *unison.Panel {
 		p.addCompact(fields, field.withoutUndo())
 	case *gurps.SelectorOverride:
 		p.selectorOverride(fields, chips, path, one)
+	case *gurps.TitleNote:
+		p.textField(fields, key("text"), i18n.Text("Title Note"), i18n.Text("Title Note"), &one.Text, nil)
+		p.optional(chips, path, "before", i18n.Text("+ before built-in notes"), i18n.Text("Place Before Built-in Notes"),
+			i18n.Text("Place After Built-in Notes"), one.BeforeBuiltIn,
+			func() { one.BeforeBuiltIn = true },
+			func() { one.BeforeBuiltIn = false },
+			func(chip *unison.Panel) { addJoiningWords(chip, i18n.Text("before the built-in notes")) })
+		if b := chips.FindRefKey(key("add before")); b != nil {
+			b.Tooltip = newWrappedTooltip(i18n.Text("Show this title note before the item's built-in notes, such as a skill's specialization"))
+		}
 	default:
 		errs.Log(errs.New("unknown feature type"), "type", f.FeatureType().Key())
 	}
@@ -584,8 +594,11 @@ func (p *featuresPanel) typePopup(parent *unison.Panel, path string, f gurps.Fea
 }
 
 // switchable adds the pill that makes the feature switchable, which comes last: after the chips, or at the end of the
-// sentence when there are none.
+// sentence when there are none. A title note is never switchable, so it gets no pill.
 func (p *featuresPanel) switchable(parent *unison.Panel, path string, f gurps.Feature) {
+	if _, ok := f.(*gurps.TitleNote); ok {
+		return
+	}
 	words := i18n.Text("only while switched on")
 	p.optional(parent, path, "switchable", i18n.Text("+ switchable"), i18n.Text("Add Switchable"),
 		i18n.Text("Remove Switchable"), f.IsSwitchable(),
@@ -1003,6 +1016,8 @@ func (p *featuresPanel) createFeatureForType(featureType feature.Type) gurps.Fea
 		return gurps.NewContainedWeightReduction()
 	case feature.CostReduction:
 		return gurps.NewCostReduction(lastAttributeIDUsed)
+	case feature.TitleNote:
+		return gurps.NewTitleNote()
 	case feature.EquipmentMaxUsesBonus:
 		bonus = gurps.NewEquipmentMaxUsesBonus()
 	case feature.DRBonus:

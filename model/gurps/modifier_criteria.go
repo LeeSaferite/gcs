@@ -29,7 +29,7 @@ type ModifierCriteria struct {
 // criteriaModifier is what ModifierCriteria checks of a modifier.
 type criteriaModifier[M Node[M]] interface {
 	Node[M]
-	NameWithReplacements() string
+	modifierNamer
 	LocalNotesWithReplacements() string
 	TagList() []string
 }
@@ -48,7 +48,7 @@ func modifiersMeet[M criteriaModifier[M]](c *ModifierCriteria, replacements map[
 	}
 	found := false
 	Traverse(func(mod M) bool {
-		found = c.ModifierNameCriteria.Matches(replacements, mod.NameWithReplacements()) &&
+		found = matchesModifierName(c.ModifierNameCriteria, replacements, mod) &&
 			c.ModifierNotesCriteria.Matches(replacements, mod.LocalNotesWithReplacements()) &&
 			c.ModifierTagsCriteria.MatchesList(replacements, mod.TagList()...)
 		return found

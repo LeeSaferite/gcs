@@ -25,6 +25,7 @@ import (
 	"github.com/richardwilkes/gcs/v5/ux/uxtest"
 	"github.com/richardwilkes/toolbox/v2/check"
 	"github.com/richardwilkes/toolbox/v2/geom"
+	"github.com/richardwilkes/toolbox/v2/i18n"
 	"github.com/richardwilkes/unison"
 	"github.com/richardwilkes/unison/accessibility"
 	"github.com/richardwilkes/unison/enums/mod"
@@ -929,14 +930,55 @@ func TestPrereqPanelChipOrder(t *testing.T) {
 	}
 	screen.Do(func() { p.toggle("r.1.0") })
 	screen.Do(func() {
-		c.Equal([]string{"level" + keyChip, "add specialization", "add optspecialization", "add points", "add tag"},
-			order())
+		c.Equal([]string{
+			"level" + keyChip, "add specialization", "add optspecialization", "add titlenote", "add points",
+			"add tag",
+		}, order())
 		uxtest.PanelsOfType[*unison.Button](p.FindRefKey("r.1.0:add specialization"))[0].ClickCallback()
 	})
 	screen.Do(func() {
 		c.Equal([]string{
-			"specialization" + keyChip, "level" + keyChip, "add optspecialization", "add points", "add tag",
+			"specialization" + keyChip, "level" + keyChip, "add optspecialization", "add titlenote", "add points",
+			"add tag",
 		}, order())
+	})
+}
+
+// TestPrereqPanelTitleNoteChip checks that the title note criterion is added at "is" and removed by its chip.
+func TestPrereqPanelTitleNoteChip(t *testing.T) {
+	c := check.New(t)
+	screen, _ := uxtest.StartHeadlessWorkspace(t, c)
+	root := newTestPrereqTree()
+	p, _ := showPrereqPanel(t, screen, &root, false)
+	skill := func() *gurps.SkillPrereq {
+		one, ok := p.node("r.1.0").(*gurps.SkillPrereq)
+		c.True(ok, "r.1.0 is a skill prereq")
+		return one
+	}
+	c.Equal(criteria.AnyText, skill().TitleNoteCriteria.Compare, "precondition: no title note criterion")
+	screen.Do(func() { p.toggle("r.1.0") })
+	screen.Do(func() {
+		uxtest.PanelsOfType[*unison.Button](p.FindRefKey("r.1.0:add titlenote"))[0].ClickCallback()
+	})
+	screen.Do(func() {
+		c.Equal(criteria.IsText, skill().TitleNoteCriteria.Compare, "adding the chip starts it at is")
+		c.Nil(p.FindRefKey("r.1.0:add titlenote"))
+		// The chip offers the same comparisons as the tag chip, worded for title notes. "Is anything" is left to the
+		// chip's remove button.
+		popup, ok := p.FindRefKey("r.1.0:titlenotecmp").Self.(*unison.PopupMenu[criteria.StringComparison])
+		c.True(ok, "the chip has a comparison popup")
+		expected := criteria.PrefixedStringComparisonChoices(i18n.Text("and at least one title note"),
+			i18n.Text("and all title notes"))[1:]
+		c.Equal(len(expected), popup.ItemCount())
+		for i, want := range expected {
+			item, _ := popup.ItemAt(i)
+			c.Equal(want, popup.ItemRendererCallback(item))
+		}
+		uxtest.PanelsOfType[*unison.Button](p.FindRefKey("r.1.0:titlenote" + keyChip))[0].ClickCallback()
+	})
+	screen.Do(func() {
+		c.Equal(criteria.AnyText, skill().TitleNoteCriteria.Compare, "removing the chip clears the criterion")
+		c.NotNil(p.FindRefKey("r.1.0:add titlenote"))
 	})
 }
 

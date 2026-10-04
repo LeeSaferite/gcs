@@ -770,7 +770,19 @@ func (e *Equipment) String() string {
 		buffer.WriteByte(' ')
 		buffer.WriteString(e.Level.String())
 	}
+	writeParenthetical(&buffer, e.TitleNotes())
 	return buffer.String()
+}
+
+// TitleNotes returns the text of the title note features of the equipment and its enabled modifiers, those placed
+// before the built-in parts first.
+func (e *Equipment) TitleNotes() []string {
+	return append(e.titleNotes(true), e.titleNotes(false)...)
+}
+
+func (e *Equipment) titleNotes(before bool) []string {
+	return modifierTitleNotes(appendTitleNotes(nil, e.Replacements, before, e.Features), before, e.Modifiers,
+		e.Replacements, func(mod *EquipmentModifier) Features { return mod.Features })
 }
 
 // ResolveLocalNotes resolves the local notes, running any embedded scripts to get the final result.
@@ -1129,7 +1141,8 @@ func (e *Equipment) DisplayLegalityClass() string {
 	}
 }
 
-// ActiveModifierFor returns the first enabled, non-container modifier whose name matches (case-insensitive).
+// ActiveModifierFor returns the first enabled, non-container modifier whose name or short name matches
+// (case-insensitive).
 func (e *Equipment) ActiveModifierFor(name string) *EquipmentModifier {
 	return activeModifierFor(e.Modifiers, name)
 }

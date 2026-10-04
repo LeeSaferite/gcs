@@ -33,6 +33,9 @@ type SkillPrereq struct {
 	OptionalSpecializationCriteria criteria.Text   `json:"optional_specialization,omitzero"`
 	PointsCriteria                 criteria.Number `json:"points,omitzero"`
 	TagsCriteria                   criteria.Text   `json:"tags,omitzero"`
+	// TitleNoteCriteria is matched against the skill's title notes, and is satisfied when any one of them
+	// matches.
+	TitleNoteCriteria criteria.Text `json:"title_note,omitzero"`
 }
 
 // NewSkillPrereq creates a new SkillPrereq.
@@ -43,6 +46,7 @@ func NewSkillPrereq() *SkillPrereq {
 	p.LevelCriteria.Compare = criteria.AtLeastNumber
 	p.SpecializationCriteria.Compare = criteria.AnyText
 	p.OptionalSpecializationCriteria.Compare = criteria.AnyText
+	p.TitleNoteCriteria.Compare = criteria.AnyText
 	p.Has = true
 	return &p
 }
@@ -77,6 +81,7 @@ func (p *SkillPrereq) FillWithNameableKeys(m, existing map[string]string) {
 		p.SpecializationCriteria.Qualifier,
 		p.OptionalSpecializationCriteria.Qualifier,
 		p.TagsCriteria.Qualifier,
+		p.TitleNoteCriteria.Qualifier,
 	)
 }
 
@@ -104,7 +109,8 @@ func (p *SkillPrereq) Satisfied(entity *Entity, exclude any, tooltip *xbytes.Ins
 			!p.SpecializationCriteria.Matches(replacements, sk.SpecializationWithReplacements()) ||
 			!p.OptionalSpecializationCriteria.Matches(replacements, sk.OptionalSpecializationWithReplacements()) ||
 			!p.PointsCriteria.Matches(points) ||
-			(p.TagsCriteria.Compare != criteria.AnyText && !p.TagsCriteria.MatchesList(replacements, sk.Tags...)) {
+			(p.TagsCriteria.Compare != criteria.AnyText && !p.TagsCriteria.MatchesList(replacements, sk.Tags...)) ||
+			!p.TitleNoteCriteria.MatchesList(replacements, sk.TitleNotes()...) {
 			return false
 		}
 		satisfied = p.LevelCriteria.Matches(sk.LevelData.Level)
@@ -129,7 +135,8 @@ func (p *SkillPrereq) Satisfied(entity *Entity, exclude any, tooltip *xbytes.Ins
 // Describe implements Prereq.
 func (p *SkillPrereq) Describe(_ *Entity, replacements map[string]string, em func(string) string) string {
 	text := HasText(p.Has) + i18n.Text(" skill ") + describeName(p.NameCriteria, replacements, em) +
-		describeSpecialization(p.SpecializationCriteria, p.OptionalSpecializationCriteria, replacements, em)
+		describeSpecialization(p.SpecializationCriteria, p.OptionalSpecializationCriteria, replacements, em) +
+		describeTitleNote(p.TitleNoteCriteria, replacements, em)
 	if p.LevelCriteria.Compare != criteria.AnyNumber {
 		text += i18n.Text(" at level ") + p.LevelCriteria.AltString()
 	}
@@ -153,4 +160,5 @@ func (p *SkillPrereq) Hash(h hash.Hash) {
 	p.OptionalSpecializationCriteria.Hash(h)
 	p.PointsCriteria.Hash(h)
 	p.TagsCriteria.Hash(h)
+	p.TitleNoteCriteria.Hash(h)
 }

@@ -943,7 +943,13 @@ func (s *Spell) String() string {
 			buffer.WriteString(*s.TechLevel)
 		}
 	}
+	writeParenthetical(&buffer, s.TitleNotes())
 	return buffer.String()
+}
+
+// TitleNotes returns the text of the spell's title note features, those placed before the built-in parts first.
+func (s *Spell) TitleNotes() []string {
+	return appendTitleNotes(appendTitleNotes(nil, s.Replacements, true, s.Features), s.Replacements, false, s.Features)
 }
 
 // ResolveLocalNotes resolves the local notes, running any embedded scripts to get the final result.

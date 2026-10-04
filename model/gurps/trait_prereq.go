@@ -34,6 +34,9 @@ type TraitPrereq struct {
 	TagsCriteria   criteria.Text   `json:"tags,omitzero"`
 	NotesCriteria  criteria.Text   `json:"notes,omitzero"`
 	ModifierCriteria
+	// TitleNoteCriteria is matched against the trait's title notes, and is satisfied when any one of them
+	// matches.
+	TitleNoteCriteria criteria.Text `json:"title_note,omitzero"`
 }
 
 // NewTraitPrereq creates a new TraitPrereq.
@@ -43,6 +46,7 @@ func NewTraitPrereq() *TraitPrereq {
 	p.NameCriteria.Compare = criteria.IsText
 	p.LevelCriteria.Compare = criteria.AtLeastNumber
 	p.NotesCriteria.Compare = criteria.AnyText
+	p.TitleNoteCriteria.Compare = criteria.AnyText
 	p.Has = true
 	return &p
 }
@@ -76,6 +80,7 @@ func (p *TraitPrereq) FillWithNameableKeys(m, existing map[string]string) {
 		p.NameCriteria.Qualifier,
 		p.TagsCriteria.Qualifier,
 		p.NotesCriteria.Qualifier,
+		p.TitleNoteCriteria.Qualifier,
 	)
 	p.fillWithModifierNameableKeys(m, existing)
 }
@@ -101,7 +106,8 @@ func (p *TraitPrereq) Satisfied(entity *Entity, exclude any, tooltip *xbytes.Ins
 		if modNotes := t.ModifierNotes(); modNotes != "" {
 			notes += "\n" + modNotes
 		}
-		if !p.NotesCriteria.Matches(replacements, notes) {
+		if !p.NotesCriteria.Matches(replacements, notes) ||
+			!p.TitleNoteCriteria.MatchesList(replacements, t.TitleNotes()...) {
 			return false
 		}
 		var levels fxp.Int
@@ -135,7 +141,7 @@ func (p *TraitPrereq) Describe(_ *Entity, replacements map[string]string, em fun
 	if p.NotesCriteria.Compare != criteria.AnyText {
 		text += i18n.Text(" whose notes ") + describeText(p.NotesCriteria, replacements, em)
 	}
-	return text + p.describeModifier(replacements, em)
+	return text + p.describeModifier(replacements, em) + describeTitleNote(p.TitleNoteCriteria, replacements, em)
 }
 
 // Hash writes this object's contents into the hasher.
@@ -152,4 +158,5 @@ func (p *TraitPrereq) Hash(h hash.Hash) {
 	p.TagsCriteria.Hash(h)
 	p.NotesCriteria.Hash(h)
 	p.hashModifier(h)
+	p.TitleNoteCriteria.Hash(h)
 }

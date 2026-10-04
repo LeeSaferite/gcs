@@ -495,6 +495,7 @@ func (p *prereqPanel) editor(pr gurps.Prereq, path string) *unison.Panel {
 		p.tagsChip(chips, path, &one.TagsCriteria)
 		p.textChip(chips, path, "notes", &one.NotesCriteria)
 		p.modifierChips(chips, path, &one.ModifierCriteria)
+		p.textChip(chips, path, "titlenote", &one.TitleNoteCriteria)
 	case *gurps.SkillPrereq:
 		p.hasPopup(fields, key("has"), &one.Has, false)
 		p.typePopup(fields, path, pr)
@@ -502,6 +503,7 @@ func (p *prereqPanel) editor(pr gurps.Prereq, path string) *unison.Panel {
 			true)
 		p.textChip(chips, path, "specialization", &one.SpecializationCriteria)
 		p.textChip(chips, path, "optspecialization", &one.OptionalSpecializationCriteria)
+		p.textChip(chips, path, "titlenote", &one.TitleNoteCriteria)
 		// Unlike a trait's, "at least 0" is a real criterion here, leaving out skills with no usable level.
 		p.numberChip(chips, path, "level", &one.LevelCriteria, 0, fxp.Thousand,
 			one.LevelCriteria.Compare != criteria.AnyNumber)
@@ -559,6 +561,7 @@ func (p *prereqPanel) editor(pr gurps.Prereq, path string) *unison.Panel {
 			true)
 		p.tagsChip(chips, path, &one.TagsCriteria)
 		p.modifierChips(chips, path, &one.ModifierCriteria)
+		p.textChip(chips, path, "titlenote", &one.TitleNoteCriteria)
 	case *gurps.ContainedQuantityPrereq:
 		p.hasPopup(fields, key("has"), &one.Has, false)
 		p.typePopup(fields, path, pr)

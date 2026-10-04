@@ -11,8 +11,10 @@ package gurps
 
 import (
 	"maps"
+	"slices"
 	"strings"
 
+	"github.com/richardwilkes/gcs/v5/model/criteria"
 	"github.com/richardwilkes/gcs/v5/model/gurps/enums/display"
 	"github.com/richardwilkes/gcs/v5/model/gurps/enums/srcstate"
 	"github.com/richardwilkes/gcs/v5/model/nameable"
@@ -54,7 +56,17 @@ type GeneralModifier interface {
 	Container() bool
 	Depth() int
 	NameWithReplacements() string
+	// ShortNameWithReplacements returns the short name with any replacements applied.
+	ShortNameWithReplacements() string
+	// CompactName returns how the modifier is named in its owner's title and notes.
+	CompactName() string
 	FullDescription() string
+	// NotesDescription returns the description shown in its owner's notes.
+	NotesDescription() string
+	// ShowsInTitle returns true if the modifier is shown in its owner's title notes.
+	ShowsInTitle() bool
+	// ShowsInNotes returns true if the modifier appears in its owner's notes.
+	ShowsInNotes() bool
 	FullCostDescription() string
 	Enabled() bool
 	Disableable
@@ -89,12 +101,13 @@ func AttachModifiers[T ModifiableNode[T, M], M ModifierNode[M, T], S ~[]M](targe
 	}
 }
 
-// activeModifierFor returns the first enabled, non-container modifier whose name matches (case-insensitive), or the
-// zero value if there is none.
+// activeModifierFor returns the first enabled, non-container modifier whose name or short name matches
+// (case-insensitive), or the zero value if there is none.
 func activeModifierFor[M ModifierNode[M, T], T ModifiableNode[T, M], S ~[]M](modifiers S, name string) M {
 	var found M
 	Traverse(func(mod M) bool {
-		if strings.EqualFold(mod.NameWithReplacements(), name) {
+		if strings.EqualFold(mod.NameWithReplacements(), name) ||
+			(mod.ShortNameWithReplacements() != "" && strings.EqualFold(mod.ShortNameWithReplacements(), name)) {
 			found = mod
 			return true
 		}
@@ -103,14 +116,42 @@ func activeModifierFor[M ModifierNode[M, T], T ModifiableNode[T, M], S ~[]M](mod
 	return found
 }
 
-// modifierDescriptions returns the full descriptions of the enabled, non-container modifiers, separated by "; ".
+// modifierNamer is a modifier that can be named by its name or its short name.
+type modifierNamer interface {
+	NameWithReplacements() string
+	ShortNameWithReplacements() string
+}
+
+// modifierNames returns the modifier's name followed by its short name when it has one, with replacements applied.
+func modifierNames(mod modifierNamer) []string {
+	if short := mod.ShortNameWithReplacements(); short != "" {
+		return []string{mod.NameWithReplacements(), short}
+	}
+	return []string{mod.NameWithReplacements()}
+}
+
+// matchesModifierName returns true if the criteria matches the modifier's name or its short name. A "not" comparison
+// must hold for both.
+func matchesModifierName(t criteria.Text, replacements map[string]string, mod modifierNamer) bool {
+	names := modifierNames(mod)
+	if t.Compare.IsNotType() {
+		return !slices.ContainsFunc(names, func(name string) bool { return !t.Matches(replacements, name) })
+	}
+	return slices.ContainsFunc(names, func(name string) bool { return t.Matches(replacements, name) })
+}
+
+// modifierDescriptions returns the notes descriptions of the enabled, non-container modifiers that appear in their
+// owner's notes, separated by "; ".
 func modifierDescriptions[M ModifierNode[M, T], T ModifiableNode[T, M], S ~[]M](modifiers S) string {
 	var buffer strings.Builder
 	Traverse(func(mod M) bool {
+		if !mod.ShowsInNotes() {
+			return false
+		}
 		if buffer.Len() != 0 {
 			buffer.WriteString("; ")
 		}
-		buffer.WriteString(mod.FullDescription())
+		buffer.WriteString(mod.NotesDescription())
 		return false
 	}, true, true, modifiers...)
 	return buffer.String()

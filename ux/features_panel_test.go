@@ -598,7 +598,7 @@ func TestFeaturesPanelTypeHeadings(t *testing.T) {
 }
 
 // TestFeaturesPanelSwitchablePill checks that the switchable pill of an open row adds and removes its feature's flag,
-// each as one step to undo, for every type of feature.
+// each as one step to undo, for every type of feature but a title note, which is never switchable.
 func TestFeaturesPanelSwitchablePill(t *testing.T) {
 	c := check.New(t)
 	screen, _ := uxtest.StartHeadlessWorkspace(t, c)
@@ -623,6 +623,11 @@ func TestFeaturesPanelSwitchablePill(t *testing.T) {
 		path := fmt.Sprint(i)
 		name := one.FeatureType().Key()
 		c.False(one.IsSwitchable(), "precondition: %s starts out not switchable", name)
+		if one.FeatureType() == feature.TitleNote {
+			screen.Do(func() { p.toggle(path) })
+			screen.Do(func() { c.Nil(p.FindRefKey(path+":add switchable"), "a title note offers no pill") })
+			continue
+		}
 		screen.Do(func() { p.toggle(path) })
 		click(path + ":add switchable")
 		c.True(features[i].IsSwitchable(), "adding the pill makes %s switchable", name)
@@ -1459,4 +1464,39 @@ func TestFeaturesPanelKeepsControlCharacters(t *testing.T) {
 		c.Equal(0, host.modified, "nothing is marked modified")
 		c.False(host.mgr.CanUndo(), "and nothing is recorded")
 	})
+}
+
+// TestFeaturesPanelTitleNoteBeforePill checks that a title note's pill places it before the built-in notes and back,
+// each as one step to undo.
+func TestFeaturesPanelTitleNoteBeforePill(t *testing.T) {
+	c := check.New(t)
+	screen, _ := uxtest.StartHeadlessWorkspace(t, c)
+	entity := gurps.NewEntity()
+	owner := gurps.NewSkill(entity, nil, false)
+	features := gurps.Features{gurps.NewTitleNote()}
+	// Undo installs copies of the features, so the note is looked up afresh each time.
+	before := func() bool {
+		note, ok := features[0].(*gurps.TitleNote)
+		return ok && note.BeforeBuiltIn
+	}
+	c.False(before(), "precondition: the note starts out after the built-in notes")
+	p, host := showFeaturesPanel(t, screen, entity, owner, &features, false)
+	click := func(key string) {
+		screen.Do(func() {
+			buttons := uxtest.PanelsOfType[*unison.Button](p.FindRefKey(key))
+			c.NotEqual(0, len(buttons), "expected a button within %s", key)
+			if len(buttons) != 0 {
+				buttons[len(buttons)-1].ClickCallback()
+			}
+		})
+	}
+	screen.Do(func() { p.toggle("0") })
+	click("0:add before")
+	c.True(before(), "adding the pill places the note first")
+	c.Equal("Undo Place Before Built-in Notes", host.mgr.UndoTitle())
+	click("0:before" + keyChip)
+	c.False(before(), "removing the chip places the note after again")
+	c.Equal("Undo Place After Built-in Notes", host.mgr.UndoTitle())
+	screen.Do(host.mgr.Undo)
+	c.True(before(), "undoing the removal places the note first again")
 }

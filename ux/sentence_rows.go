@@ -610,6 +610,11 @@ func rowCriteria(key string) rowCriterion {
 			subject: i18n.Text("Tag"), add: i18n.Text("+ tag"),
 			prefix: i18n.Text("and at least one tag"), notPrefix: i18n.Text("and all tags"),
 		}
+	case "titlenote":
+		return rowCriterion{
+			subject: i18n.Text("Title Note"), add: i18n.Text("+ title note"),
+			prefix: i18n.Text("and at least one title note"), notPrefix: i18n.Text("and all title notes"),
+		}
 	case "usage":
 		return rowCriterion{subject: i18n.Text("Usage"), add: i18n.Text("+ usage"), prefix: i18n.Text("and whose usage")}
 	case "specialization":

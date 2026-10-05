@@ -13,7 +13,9 @@
   The section opens collapsed to a paragraph of its features' sentences when it has any; clicking its title or the
   paragraph expands it.
 - The prerequisites section of the editors works the same way, opening collapsed to a paragraph describing its
-  prerequisites when it has any. That paragraph no longer shows above them once the section is expanded.
+  prerequisites when it has any. That paragraph no longer shows above them once the section is expanded. Each group's
+  add button now sits on a line of its own at the end of the group, in line with the more buttons, and dropping a
+  prerequisite on that line puts it at the end of the group rather than after it.
 - Weapon bonus tooltips on the sheet use shorter names, such as "to accuracy", and the rate of fire bonuses say which
   mode they apply to.
 - A new weapon bonus that picks weapons by their skill no longer starts out requiring a relative skill level of at least

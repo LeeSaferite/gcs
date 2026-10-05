@@ -59,6 +59,7 @@ const (
 	dropOnHead
 	dropOnGroup
 	dropOnEmpty
+	dropOnFoot
 )
 
 const (
@@ -396,7 +397,8 @@ func groupWord(all bool) string {
 	return i18n.Text("Any of")
 }
 
-// group returns the panel for a list: its head, over its children hanging from a rail in the head's color.
+// group returns the panel for a list: its head, over its children hanging from a rail in the head's color, ended by a
+// line holding the add button in line with the children's more buttons.
 func (p *prereqPanel) group(list *gurps.PrereqList, path string) *unison.Panel {
 	color := colors.Grouping2
 	if list.All {
@@ -457,10 +459,7 @@ func (p *prereqPanel) group(list *gurps.PrereqList, path string) *unison.Panel {
 		}
 		empty.ClientData()[prereqDropKey] = prereqDropSpot{path: path, part: dropOnEmpty}
 	}
-	// An untouched empty root has nothing for its pill, status or rail to speak of, so its placeholder takes their place.
-	if emptyRoot {
-		head.AddChild(empty)
-	} else {
+	if !emptyRoot {
 		p.views = append(p.views, prereqView{node: list, icon: p.statusIcon(head), group: box})
 		addCentered(head, pill)
 	}
@@ -472,21 +471,39 @@ func (p *prereqPanel) group(list *gurps.PrereqList, path string) *unison.Panel {
 					fxp.Twelve, true)
 			})
 	}
-	add := newIconButton(path+keyAdd, unison.CircledAddSVG, i18n.Text("Add to this group"))
-	add.ClickCallback = func() { showMenu(add.AsPanel(), p.addEntries(list, path)) }
-	fitLine(add)
-	add.SetLayoutData(&unison.FlexLayoutData{HAlign: align.End, VAlign: align.Middle, HGrab: !emptyRoot})
-	head.AddChild(add)
 	if path != prereqRootPath {
 		p.moreButton(head, list, path)
 	} else {
-		// The root keeps room for the more button it doesn't have, so that its add button lines up with the others.
+		// The root keeps room for the more button it doesn't have, so that its head is as tall as the others.
 		room := newIconButton("", svg.CircledVerticalEllipsis, "")
 		room.Hidden = true
-		addCentered(head, room)
+		head.AddChild(room)
 	}
 	// As tall as the add button, since centering a shorter one could put its icon on a half pixel, blurring it.
-	fitLine(head.Children()[len(head.Children())-1])
+	last := head.Children()[len(head.Children())-1]
+	last.SetLayoutData(&unison.FlexLayoutData{HAlign: align.End, VAlign: align.Middle, HGrab: true})
+	fitLine(last)
+
+	// The add button ends the group on a line of its own, in line with the more buttons of the rows above it, or beside
+	// the placeholder of an empty group.
+	foot := unison.NewPanel()
+	foot.SetBorder(unison.NewEmptyBorder(geom.Insets{Left: 4, Right: 8}))
+	add := newIconButton(path+keyAdd, unison.CircledAddSVG, i18n.Text("Add to this group"))
+	add.ClickCallback = func() { showMenu(add.AsPanel(), p.addEntries(list, path)) }
+	fitLine(add)
+	add.SetLayoutData(&unison.FlexLayoutData{HAlign: align.End, VAlign: align.Middle, HGrab: empty == nil})
+	if empty != nil {
+		foot.AddChild(empty)
+	}
+	foot.ClientData()[prereqDropKey] = prereqDropSpot{path: path, part: dropOnFoot}
+	foot.AddChild(add)
+	hbox(foot, unison.StdHSpacing)
+	// An untouched empty root has nothing for its pill, status or rail to speak of, so its placeholder takes their place.
+	if emptyRoot {
+		foot.SetBorder(unison.NewEmptyBorder(insets))
+		box.AddChild(foot)
+		return box
+	}
 	box.AddChild(hbox(head, unison.StdHSpacing))
 
 	rail := newColumn()
@@ -501,12 +518,7 @@ func (p *prereqPanel) group(list *gurps.PrereqList, path string) *unison.Panel {
 			rail.AddChild(p.row(child, childPath(path, i)))
 		}
 	}
-	if emptyRoot {
-		return box
-	}
-	if empty != nil {
-		rail.AddChild(empty)
-	}
+	rail.AddChild(foot)
 	box.AddChild(rail)
 	return box
 }
@@ -840,10 +852,18 @@ func (p *prereqPanel) dropAt(where geom.Point, data any) (target *unison.Panel, 
 		switch spot.part {
 		case dropOnEmpty:
 			return target, spot.path, dropInto
+		case dropOnFoot:
+			return p.footDrop(target, spot.path, from)
 		case dropOnGroup:
-			// Only the rail's margins reach the group itself; beside or below its last child is after it.
+			// Only the rail's margins reach the group itself. Beside the line that ends the group is on that line, and
+			// beside the lower half of its last child or below that line is after the group.
 			rows := target.Children()[len(target.Children())-1].Children()
-			last := rows[len(rows)-1]
+			foot := rows[len(rows)-1]
+			footRect := p.RectFromRoot(foot.RectToRoot(foot.ContentRect(true)))
+			if where.Y >= footRect.Y && where.Y < footRect.Bottom() {
+				return p.footDrop(foot, spot.path, from)
+			}
+			last := rows[max(len(rows)-2, 0)]
 			if where.Y > p.RectFromRoot(last.RectToRoot(last.ContentRect(true))).CenterY() {
 				return target, spot.path, dropAfter
 			}
@@ -861,6 +881,24 @@ func (p *prereqPanel) dropAt(where geom.Point, data any) (target *unison.Panel, 
 		}
 	}
 	return nil, "", 0
+}
+
+// footDrop returns where a prerequisite dragged from the path from goes when dropped on the line that ends the group at
+// the path: at the end of the group, marked under its last child, or into the placeholder of an empty group.
+func (p *prereqPanel) footDrop(foot *unison.Panel, path, from string) (target *unison.Panel, to string, at int) {
+	list, ok := p.node(path).(*gurps.PrereqList)
+	if !ok {
+		return nil, "", 0
+	}
+	if len(list.Prereqs) == 0 {
+		return foot.Children()[0], path, dropInto
+	}
+	last := childPath(path, len(list.Prereqs)-1)
+	if last == from {
+		return nil, "", 0
+	}
+	rows := foot.Parent().Children()
+	return rows[len(rows)-2], last, dropAfter
 }
 
 // drop moves the dragged prerequisite to where it would go.

@@ -749,7 +749,7 @@ func TestPrereqPanelDragAndDrop(t *testing.T) {
 		screen.Do(func() {
 			key := onto + keyMore
 			if onto == prereqRootPath {
-				key = onto + keyAdd
+				key = onto + keyPill
 			}
 			target := p.FindRefKey(key).Parent()
 			r := p.RectFromRoot(target.RectToRoot(target.ContentRect(true)))
@@ -797,6 +797,107 @@ func TestPrereqPanelDropAfterGroup(t *testing.T) {
 		p.drop(where, data)
 	})
 	c.Equal([]prereq.Type{prereq.List, prereq.Skill, prereq.Script, prereq.Trait}, prereqShape(root))
+}
+
+// TestPrereqPanelAddButtonEndsGroup checks that each group's add button sits on a line of its own after the group's
+// children, in line with their more buttons, and no longer in the group's head.
+func TestPrereqPanelAddButtonEndsGroup(t *testing.T) {
+	c := check.New(t)
+	screen, _ := startHeadlessWorkspace(t, c)
+	root := newTestPrereqTree()
+	p, _ := showPrereqPanel(t, screen, &root, false)
+	right := func(key string) float32 {
+		panel := p.FindRefKey(key)
+		return p.RectFromRoot(panel.RectToRoot(panel.ContentRect(true))).Right()
+	}
+	bottom := func(key string) float32 {
+		panel := p.FindRefKey(key)
+		return p.RectFromRoot(panel.RectToRoot(panel.ContentRect(true))).Bottom()
+	}
+	screen.Do(func() {
+		for _, path := range []string{prereqRootPath, "r.1"} {
+			add := p.FindRefKey(path + keyAdd)
+			c.NotNil(add, "%s has an add button", path)
+			c.True(add.Parent() != p.FindRefKey(path+keyPill).Parent(), "%s: not in the head", path)
+		}
+		c.Equal(right("r.1.0"+keyMore), right("r.1"+keyAdd), "a nested group's add button lines up with its rows'")
+		c.Equal(right("r.0"+keyMore), right(prereqRootPath+keyAdd), "as does the root's")
+		c.True(bottom("r.1.1"+keyMore) < bottom("r.1"+keyAdd), "and comes after the group's last row")
+		c.True(bottom("r.2"+keyMore) < bottom(prereqRootPath+keyAdd), "and the root's after its last row")
+	})
+}
+
+// TestPrereqPanelDropOnFoot checks that a drop on the line that ends a group, holding its add button, goes at the end
+// of the group, marked under its last child, or into an empty group's placeholder, which shares that line, and that a
+// drop below that line goes after the group.
+func TestPrereqPanelDropOnFoot(t *testing.T) {
+	c := check.New(t)
+	screen, _ := startHeadlessWorkspace(t, c)
+	// dragTo drags the root's first child to a point a fraction of the way across and down the panel with the reference
+	// key, checking the target and placement of the marker, then drops it.
+	dragTo := func(p *prereqPanel, key string, fx, fy float32, target string, at int) {
+		screen.Do(func() {
+			panel := p.FindRefKey(key)
+			r := p.RectFromRoot(panel.RectToRoot(panel.ContentRect(true)))
+			where := geom.NewPoint(r.X+r.Width*fx, r.Y+r.Height*fy)
+			data := &rowDrag{panel: p.AsPanel(), path: "r.0"}
+			p.dragOver(where, data)
+			want := p.FindRefKey(target)
+			if strings.HasSuffix(target, keyMore) {
+				want = want.Parent()
+			}
+			c.Equal(want, p.dropTarget, "the marker is on %s", target)
+			c.Equal(at, p.dropWhere)
+			p.drop(where, data)
+		})
+	}
+	// groupLen returns the number of children of the root's child at i, or -1 if it isn't a group.
+	groupLen := func(root *gurps.PrereqList, i int) int {
+		if list, ok := root.Prereqs[i].(*gurps.PrereqList); ok {
+			return len(list.Prereqs)
+		}
+		return -1
+	}
+
+	// A nested group that is the last child of the root.
+	root := newTestPrereqTree()
+	root.Prereqs = root.Prereqs[:2]
+	c.Equal(2, groupLen(root, 1), "precondition: the root ends with a group of two")
+	p, _ := showPrereqPanel(t, screen, &root, false)
+	dragTo(p, "r.1"+keyAdd, 0.5, 0.5, "r.1.1"+keyMore, dropAfter)
+	c.Equal(1, len(root.Prereqs), "the add button's line puts the row in the group")
+	c.Equal(3, groupLen(root, 0), "at its end")
+	if group, ok := root.Prereqs[0].(*gurps.PrereqList); ok && len(group.Prereqs) == 3 {
+		c.Equal(prereq.Trait, group.Prereqs[2].PrereqType())
+	}
+
+	root = newTestPrereqTree()
+	root.Prereqs = root.Prereqs[:2]
+	p, _ = showPrereqPanel(t, screen, &root, false)
+	dragTo(p, "r.1:group", 0.01, 0.98, "r.1.1"+keyMore, dropAfter)
+	c.Equal(3, groupLen(root, 0), "the rail beside the add button's line is on that line too")
+
+	root = newTestPrereqTree()
+	root.Prereqs = root.Prereqs[:2]
+	p, _ = showPrereqPanel(t, screen, &root, false)
+	dragTo(p, prereqRootPath+keyAdd, 0.5, 0.5, "r.1:group", dropAfter)
+	c.Equal(2, len(root.Prereqs), "the line below, which ends the root, puts the row after the group")
+	c.Equal(2, groupLen(root, 0), "leaving the group as it was")
+	c.Equal(prereq.Trait, root.Prereqs[1].PrereqType())
+
+	// An empty nested group, whose placeholder shares the line with its add button.
+	root = gurps.NewPrereqList()
+	root.Prereqs = gurps.Prereqs{gurps.NewTraitPrereq(), gurps.NewPrereqList(), gurps.NewSkillPrereq()}
+	root = root.CloneAsPrereqList(nil)
+	c.Equal(0, groupLen(root, 1), "precondition: the middle group is empty")
+	p, _ = showPrereqPanel(t, screen, &root, false)
+	screen.Do(func() {
+		c.Equal(p.FindRefKey("r.1:empty").Parent(), p.FindRefKey("r.1"+keyAdd).Parent(),
+			"the placeholder and the add button share a line")
+	})
+	dragTo(p, "r.1"+keyAdd, 0.5, 0.5, "r.1:empty", dropInto)
+	c.Equal(2, len(root.Prereqs), "the add button beside the placeholder puts the row in the empty group")
+	c.Equal(1, groupLen(root, 0))
 }
 
 // TestPrereqPanelDragFromRow checks that a row can be dragged by its sentence, and that a click on a sentence, even a

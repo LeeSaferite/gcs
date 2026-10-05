@@ -952,6 +952,13 @@ func TestPrereqPanelEmptyRootGroupType(t *testing.T) {
 	pill, text = headed()
 	c.False(pill, "undo goes back to the single line")
 	c.Equal(single, text)
+	screen.Do(func() {
+		focus := p.Window().Focus()
+		c.NotNil(focus)
+		if focus != nil {
+			c.Equal(treeRootPath+keyAdd, focus.RefKey, "giving the focus to what adds to the root")
+		}
+	})
 	choose("All of Group")
 	pill, _ = headed()
 	c.True(pill, "choosing the type the root already has still shows its head")

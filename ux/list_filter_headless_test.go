@@ -264,7 +264,8 @@ func TestListFilterNewFilterDialogHeadless(t *testing.T) {
 	c.True(okEnabled(), "a name no other saved filter bears can be accepted")
 	captureScreen(t, c, screen, "list_filter_dialog")
 
-	// Add a condition to the empty root through its placeholder. It starts out testing the first field, open.
+	// Add a condition to the empty root through the entry its placeholder's menu offers. With no field chosen before,
+	// it starts out testing the first field, open.
 	p := dialogFilterPanel(t, screen, dialogWnd)
 	var placeholder *unison.Panel
 	screen.Do(func() { placeholder = p.FindRefKey(treeRootPath + ":empty") })
@@ -273,6 +274,11 @@ func TestListFilterNewFilterDialogHeadless(t *testing.T) {
 	screen.Do(func() {
 		c.Equal("r.0", p.open, "the added condition is open")
 		c.Equal("r.0:field", dialogWnd.Focus().RefKey, "with its field popup focused")
+		cond, ok := p.node("r.0").(*gurps.FilterCondition)
+		c.True(ok)
+		if ok {
+			c.Equal(gurps.TraitFilterFields()[0].Key, cond.Field, "testing the first field")
+		}
 	})
 
 	screen.Click(screen.PanelCenter(okButton))
@@ -430,8 +436,18 @@ func TestListFilterEditorKeysHeadless(t *testing.T) {
 	focus(cancelButton)
 	undo()
 	c.Equal(0, read().children, "Undo on Cancel works too")
+	// Undo rebuilds the panel and moves the focus into it, so Cancel is focused again for Redo.
+	focus(cancelButton)
+	var onCancel bool
+	screen.Do(func() { onCancel = dialogWnd.Focus() == cancelButton.AsPanel() })
+	c.True(onCancel, "Cancel has the focus")
 	redo()
 	c.Equal(state{name: "Ranged", open: "r.0", children: 1, ok: true}, read(), "as does Redo, opening the row again")
+	focus(okButton)
+	undo()
+	focus(okButton)
+	redo()
+	c.Equal(1, read().children, "and both work with OK focused")
 	focus(cancelButton)
 	screen.KeyPress(unison.KeyEscape, mod.None)
 	c.Equal("", read().open, "Escape on Cancel closes it")

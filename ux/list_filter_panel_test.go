@@ -314,12 +314,34 @@ func TestListFilterPanelEmptyRoot(t *testing.T) {
 		c.NotNil(p.FindRefKey("r"+keyMore), "which brings back the head's add button")
 	})
 
-	// The root shows its placeholder alone again once undo empties it, and choosing a group type for it then clears
-	// whatever its head said.
+	// A root that a pill choice gave a head keeps it while it holds something and after that is undone, and shows its
+	// placeholder alone again once undo takes back the pill choice too. Choosing a group type for it then sets its type.
 	f = gurps.NewListFilter("")
-	p, _ = showListFilterPanel(t, screen, f)
+	p, host = showListFilterPanel(t, screen, f)
 	screen.Do(func() { menuAction(p.treeAddEntries(f.Root, "r"), "Any of Group")() })
-	screen.Do(func() { c.Equal(filterAnyOf, groupModeOf(f.Root), "Any of Group makes the bare root any of") })
+	screen.Do(func() {
+		c.Equal(filterAnyOf, groupModeOf(f.Root), "Any of Group makes the bare root any of")
+		if pill, ok := p.FindRefKey("r" + keyPill).Self.(*unison.PopupMenu[filterGroupMode]); ok {
+			pill.Select(filterNoneOf)
+		}
+	})
+	screen.Do(func() { menuAction(p.treeAddEntries(f.Root, "r"), "New Condition")() })
+	screen.Do(func() {
+		c.Equal(1, len(f.Root.Children))
+		host.undoMgr.Undo()
+	})
+	screen.Do(func() {
+		c.Equal(0, len(f.Root.Children), "undo empties the root")
+		c.NotNil(p.FindRefKey("r"+keyPill), "which keeps the head the pill choice gave it")
+		host.undoMgr.Undo()
+		host.undoMgr.Undo()
+	})
+	screen.Do(func() {
+		c.Nil(p.FindRefKey("r"+keyPill), "undoing the choices too leaves the placeholder alone")
+		c.Equal(filterAllOf, groupModeOf(f.Root))
+		menuAction(p.treeAddEntries(f.Root, "r"), "Any of Group")()
+	})
+	screen.Do(func() { c.Equal(filterAnyOf, groupModeOf(f.Root), "choosing a group type then sets it again") })
 
 	// Choosing All of in the pill of an empty root keeps the pill.
 	f = gurps.NewListFilter("")
@@ -615,13 +637,36 @@ func TestListFilterPanelPassesEscape(t *testing.T) {
 	})
 }
 
-// TestListFilterPanelFieldKinds switches one condition through a field of every kind and back, checking that each
-// brings the controls its kind compares with and clears what the last one had.
+// TestListFilterPanelFieldKinds switches one condition through a field of every kind and back, giving each a criterion
+// that accepts less than anything first, checking that each field brings the controls its kind compares with and
+// clears what the last one had. A switch between two fields of the same kind, points and levels, clears it too.
 func TestListFilterPanelFieldKinds(t *testing.T) {
 	c := check.New(t)
 	screen, _ := startHeadlessWorkspace(t, c)
-	f := newTestListFilter()
-	p, _ := showListFilterPanel(t, screen, f)
+	setCriteria := func(cond *gurps.FilterCondition) {
+		cond.Text = criteria.Text{Compare: criteria.ContainsText, Qualifier: "x"}
+		cond.Number = criteria.Number{Compare: criteria.AtLeastNumber, Qualifier: fxp.FromInteger(5)}
+		cond.Weight = criteria.Weight{Compare: criteria.AtMostNumber, Qualifier: fxp.WeightFromInteger(5, fxp.Pound)}
+	}
+	switchTo := func(p *listFilterPanel, field, control string) {
+		screen.Do(func() {
+			setCriteria(filterConditionAt(t, p, "r.0"))
+			if popup, ok := p.FindRefKey("r.0:field").Self.(*unison.PopupMenu[string]); ok {
+				popup.Select(field)
+			}
+		})
+		screen.Do(func() {
+			cond := filterConditionAt(t, p, "r.0")
+			c.Equal(field, cond.Field, field)
+			c.True(cond.Text.IsZero(), "%s: the text criterion is cleared", field)
+			c.True(cond.Number.IsZero(), "%s: the number criterion is cleared", field)
+			c.True(cond.Weight.IsZero(), "%s: the weight criterion is cleared", field)
+			for _, key := range []string{"r.0:textcmp", "r.0:numbercmp", "r.0:weightcmp"} {
+				c.Equal(key == control, p.FindRefKey(key) != nil, "%s: %s", field, key)
+			}
+		})
+	}
+	p, _ := showListFilterPanel(t, screen, newTestListFilter())
 	screen.Do(func() { p.toggle("r.0") })
 	for _, one := range []struct {
 		field, control string
@@ -632,20 +677,48 @@ func TestListFilterPanelFieldKinds(t *testing.T) {
 		{"container", ""},
 		{"name", "r.0:textcmp"},
 	} {
-		screen.Do(func() {
-			if popup, ok := p.FindRefKey("r.0:field").Self.(*unison.PopupMenu[string]); ok {
-				popup.Select(one.field)
-			}
-		})
-		screen.Do(func() {
-			cond := filterConditionAt(t, p, "r.0")
-			c.Equal(one.field, cond.Field, one.field)
-			c.True(cond.Text.IsZero() && cond.Number.IsZero() && cond.Weight.IsZero(), "%s starts clear", one.field)
-			for _, key := range []string{"r.0:textcmp", "r.0:numbercmp", "r.0:weightcmp"} {
-				c.Equal(key == one.control, p.FindRefKey(key) != nil, "%s: %s", one.field, key)
-			}
-		})
+		switchTo(p, one.field, one.control)
 	}
+
+	f := gurps.NewListFilter("")
+	f.Root.Children = gurps.FilterNodes{gurps.NewFilterCondition(f.Root, "points")}
+	p, _ = showListFilterPanelFor(t, screen, f, filterFieldInfos(gurps.TraitFilterFields()))
+	screen.Do(func() { p.toggle("r.0") })
+	switchTo(p, "levels", "r.0:numbercmp")
+}
+
+// TestListFilterPanelListEditor checks what an open condition on a list offers: comparisons worded for a list, and a
+// field whose tooltip says how to give several values.
+func TestListFilterPanelListEditor(t *testing.T) {
+	c := check.New(t)
+	screen, _ := startHeadlessWorkspace(t, c)
+	f := gurps.NewListFilter("")
+	tags := gurps.NewFilterCondition(f.Root, "tags")
+	tags.Text = criteria.Text{Compare: criteria.IsText, Qualifier: "Shield"}
+	f.Root.Children = gurps.FilterNodes{tags}
+	p, _ := showListFilterPanel(t, screen, f)
+	screen.Do(func() { p.toggle("r.0") })
+	screen.Do(func() {
+		popup, ok := p.FindRefKey("r.0:textcmp").Self.(*unison.PopupMenu[criteria.StringComparison])
+		c.True(ok)
+		if ok {
+			items := make([]string, 0, popup.ItemCount())
+			for i := range popup.ItemCount() {
+				item, _ := popup.ItemAt(i)
+				items = append(items, popup.ItemRendererCallback(item))
+			}
+			c.Equal([]string{
+				"that are anything", "where at least one is", "where none is", "where at least one contains",
+				"where none contains", "where at least one starts with", "where none starts with",
+				"where at least one ends with", "where none ends with",
+			}, items)
+		}
+		field := p.FindRefKey("r.0:text")
+		c.NotNil(field)
+		if field != nil {
+			c.Contains(tooltipText(field.Tooltip), "commas", "the field says how to give several values")
+		}
+	})
 }
 
 // TestListFilterPanelSavesUnknownNodes shows a filter loaded with a node of a kind this version doesn't know, changes

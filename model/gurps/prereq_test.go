@@ -159,6 +159,28 @@ func TestPrereqDescribe(t *testing.T) {
 }
 
 // TestPrereqDescribeReplacements verifies that a description applies the nameable replacements it is given.
+// TestPrereqDescribeQuotesValues checks how a "whose ..." clause shows its value: bare after "is" when it reads plainly,
+// and otherwise quoted as it is, in single quotes when it holds a double quote.
+func TestPrereqDescribeQuotesValues(t *testing.T) {
+	c := check.New(t)
+	for i, one := range []struct {
+		compare criteria.StringComparison
+		notes   string
+		want    string
+	}{
+		{criteria.IsText, "Sharp", "Has trait Acute Vision whose notes is Sharp"},
+		{criteria.IsText, "Sharp, Keen", `Has trait Acute Vision whose notes is "Sharp, Keen"`},
+		{criteria.IsText, " Sharp", `Has trait Acute Vision whose notes is " Sharp"`},
+		{criteria.ContainsText, " ", `Has trait Acute Vision whose notes contains " "`},
+		{criteria.ContainsText, "", `Has trait Acute Vision whose notes contains ""`},
+		{criteria.IsText, `Say "hi"`, `Has trait Acute Vision whose notes is 'Say "hi"'`},
+	} {
+		p := namedTrait("Acute Vision")
+		p.NotesCriteria = criteria.Text{Compare: one.compare, Qualifier: one.notes}
+		c.Equal(one.want, p.Describe(nil, nil, func(s string) string { return s }), "case %d", i)
+	}
+}
+
 func TestPrereqDescribeReplacements(t *testing.T) {
 	c := check.New(t)
 	p := gurps.NewTraitPrereq()

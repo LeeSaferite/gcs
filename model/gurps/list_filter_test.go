@@ -271,8 +271,14 @@ func TestListFilterMatchesByKind(t *testing.T) {
 	trait.BasePoints = fxp.FromInteger(5)
 	c.Equal(fxp.FromInteger(5), trait.AdjustedPoints(nil), "the trait should be worth the points it was given")
 
+	trait.LocalNotes = "Sharp"
+
 	untagged := gurps.NewTrait(nil, nil, false)
 	untagged.Name = "Untagged"
+
+	spaced := gurps.NewTrait(nil, nil, false)
+	spaced.Name = "Spaced"
+	spaced.LocalNotes = "  "
 
 	container := gurps.NewTrait(nil, nil, true)
 	container.Name = "Group"
@@ -319,9 +325,25 @@ func TestListFilterMatchesByKind(t *testing.T) {
 			"list does not contain, no match", trait,
 			newTextFilterCondition("tags", criteria.DoesNotContainText, "ment"), false,
 		},
+		// An item with no tags doesn't have tags, so no comparison holds for it, though a negated one does.
 		{"list is, empty tag list", untagged, newTextFilterCondition("tags", criteria.IsText, "Mental"), false},
-		{"list is not, empty tag list", untagged, newTextFilterCondition("tags", criteria.IsNotText, "Mental"), true},
-		{"list anything, empty tag list", untagged, gurps.NewFilterCondition(nil, "tags"), true},
+		{"list is not, empty tag list", untagged, newTextFilterCondition("tags", criteria.IsNotText, "Mental"), false},
+		{"list is empty, empty tag list", untagged, newTextFilterCondition("tags", criteria.IsText, ""), false},
+		{"list anything, empty tag list", untagged, gurps.NewFilterCondition(nil, "tags"), false},
+		{"list anything, tagged", trait, gurps.NewFilterCondition(nil, "tags"), true},
+		{"not list anything, empty tag list", untagged, negated(gurps.NewFilterCondition(nil, "tags")), true},
+		{"not list anything, tagged", trait, negated(gurps.NewFilterCondition(nil, "tags")), false},
+
+		// Text that is empty, or only space, is not had either.
+		{"text anything, no notes", untagged, gurps.NewFilterCondition(nil, "notes"), false},
+		{"text is empty, no notes", untagged, newTextFilterCondition("notes", criteria.IsText, ""), false},
+		{
+			"text does not contain, no notes", untagged,
+			newTextFilterCondition("notes", criteria.DoesNotContainText, "x"), false,
+		},
+		{"not text anything, no notes", untagged, negated(gurps.NewFilterCondition(nil, "notes")), true},
+		{"not text anything, space only", spaced, negated(gurps.NewFilterCondition(nil, "notes")), true},
+		{"text anything, notes", trait, gurps.NewFilterCondition(nil, "notes"), true},
 
 		// Number.
 		{"number is", trait, newNumberFilterCondition("points", criteria.EqualsNumber, fxp.FromInteger(5)), true},

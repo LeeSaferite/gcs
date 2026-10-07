@@ -1,0 +1,1 @@
+{"type":"compare","left":{"aggregate":"sum","of":"traits","where":{"type":"check","field":"name","text":{"compare":"is","qualifier":"Psi"}},"field":"level","scale":2,"offset":-1},"op":"at_most","right":{"sum":[{"attribute":"iq"},{"entity":"tech_level"},{"value":0}]},"not":true}

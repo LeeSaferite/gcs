@@ -1,0 +1,12 @@
+{
+	"type": "compare",
+	"left": {
+		"aggregate": "average",
+		"of": "skills",
+		"field": "level"
+	},
+	"op": "is",
+	"right": {
+		"value": 2
+	}
+}

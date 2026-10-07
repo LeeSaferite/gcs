@@ -1,0 +1,14 @@
+{
+	"type": "compare",
+	"left": {
+		"aggregate": "max",
+		"of": "skills",
+		"field": "level",
+		"default": -1
+	},
+	"op": "more_than",
+	"right": {
+		"aggregate": "count",
+		"of": "equipped"
+	}
+}

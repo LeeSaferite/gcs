@@ -1,0 +1,1 @@
+{"type":"check","field":"weight","weight":{"compare":"at_most","qualifier":"10.79 lb"},"absent_passes":true}

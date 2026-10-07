@@ -1,0 +1,8 @@
+{
+	"type": "check",
+	"field": "level",
+	"number": {
+		"compare": "at_least",
+		"qualifier": 2.5
+	}
+}

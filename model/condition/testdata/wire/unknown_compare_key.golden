@@ -1,0 +1,8 @@
+{
+	"type": "check",
+	"field": "name",
+	"text": {
+		"compare": "matches",
+		"qualifier": "F.*"
+	}
+}

@@ -1,0 +1,10 @@
+{
+	"type": "future_thing",
+	"some": [
+		1,
+		2,
+		{
+			"deep": true
+		}
+	]
+}

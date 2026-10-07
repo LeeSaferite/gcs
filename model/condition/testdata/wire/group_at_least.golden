@@ -1,0 +1,31 @@
+{
+	"type": "group",
+	"mode": "at_least",
+	"n": 2,
+	"children": [
+		{
+			"type": "check",
+			"field": "name",
+			"text": {
+				"compare": "is",
+				"qualifier": "Fire"
+			}
+		},
+		{
+			"type": "check",
+			"field": "name",
+			"text": {
+				"compare": "is",
+				"qualifier": "Air"
+			}
+		},
+		{
+			"type": "check",
+			"field": "name",
+			"text": {
+				"compare": "is",
+				"qualifier": "Water"
+			}
+		}
+	]
+}

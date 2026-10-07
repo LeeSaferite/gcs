@@ -1,0 +1,10 @@
+{
+	"type": "compare",
+	"left": {
+		"self": "contained_weight"
+	},
+	"op": "less_than",
+	"right": {
+		"weight": "10.79 lb"
+	}
+}

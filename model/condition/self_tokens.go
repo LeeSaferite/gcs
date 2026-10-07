@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/richardwilkes/gcs/v5/model/criteria"
 	"github.com/richardwilkes/gcs/v5/model/nameable"
@@ -141,17 +142,19 @@ func (e *evaluator) matchTokens(c *Check, sq *selfQualifier, v Value, f frame) (
 }
 
 // splitPieces applies the replacements to the literal runs and, for a List value, splits the parts into pieces on the
-// commas of those runs, trimming each piece and dropping empty ones. Token values are never split.
+// commas of those runs, trimming each piece as strings.TrimSpace does and dropping empty ones, as
+// criteria.Text.MatchesList does. A Text value's qualifier stays whole and untrimmed, as criteria.Text.Matches leaves
+// it. Token values are never split.
 func splitPieces(parts []qualifierPart, repl map[string]string, split bool) [][]qualifierPart {
 	var pieces [][]qualifierPart
 	var current []qualifierPart
 	end := func() {
 		if n := len(current); n != 0 {
-			if !current[0].token {
-				current[0].text = strings.TrimLeft(current[0].text, " \t\n\r")
+			if split && !current[0].token {
+				current[0].text = strings.TrimLeftFunc(current[0].text, unicode.IsSpace)
 			}
-			if !current[n-1].token {
-				current[n-1].text = strings.TrimRight(current[n-1].text, " \t\n\r")
+			if split && !current[n-1].token {
+				current[n-1].text = strings.TrimRightFunc(current[n-1].text, unicode.IsSpace)
 			}
 			if n > 1 || current[0].token || current[0].text != "" {
 				pieces = append(pieces, current)

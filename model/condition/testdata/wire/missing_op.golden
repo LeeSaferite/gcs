@@ -1,0 +1,9 @@
+{
+	"type": "compare",
+	"left": {
+		"value": 1
+	},
+	"right": {
+		"value": 2
+	}
+}

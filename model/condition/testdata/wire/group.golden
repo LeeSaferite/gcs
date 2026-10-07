@@ -1,0 +1,21 @@
+{
+	"type": "group",
+	"mode": "all",
+	"not": true,
+	"exclusive": true,
+	"only_when": {
+		"type": "check",
+		"field": "container",
+		"not": true
+	},
+	"children": [
+		{
+			"type": "const",
+			"value": true
+		},
+		{
+			"type": "script",
+			"script": "true"
+		}
+	]
+}

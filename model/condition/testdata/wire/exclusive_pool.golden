@@ -1,0 +1,54 @@
+{
+	"type": "group",
+	"mode": "all",
+	"exclusive": true,
+	"children": [
+		{
+			"type": "count",
+			"of": "spells",
+			"where": {
+				"type": "check",
+				"field": "college",
+				"text": {
+					"compare": "is",
+					"qualifier": "Fire"
+				}
+			},
+			"quantity": {
+				"compare": "at_least",
+				"qualifier": 2
+			}
+		},
+		{
+			"type": "group",
+			"mode": "any",
+			"children": [
+				{
+					"type": "count",
+					"of": "spells",
+					"where": {
+						"type": "check",
+						"field": "college",
+						"text": {
+							"compare": "is",
+							"qualifier": "Air"
+						}
+					}
+				},
+				{
+					"type": "count",
+					"of": "spells",
+					"quantity": {
+						"compare": "is",
+						"qualifier": 2
+					},
+					"group_by": "college",
+					"per_group": {
+						"compare": "at_least",
+						"qualifier": 2
+					}
+				}
+			]
+		}
+	]
+}

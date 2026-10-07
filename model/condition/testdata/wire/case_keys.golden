@@ -1,0 +1,34 @@
+{
+	"type": "group",
+	"mode": "at_least",
+	"n": 1,
+	"children": [
+		{
+			"type": "check",
+			"field": "name",
+			"text": {
+				"compare": "starts_with",
+				"qualifier": "F"
+			}
+		},
+		{
+			"type": "compare",
+			"left": {
+				"aggregate": "count",
+				"of": "spells"
+			},
+			"op": "more_than",
+			"right": {
+				"value": 3
+			}
+		},
+		{
+			"type": "count",
+			"of": "spells",
+			"quantity": {
+				"compare": "is",
+				"qualifier": 2
+			}
+		}
+	]
+}

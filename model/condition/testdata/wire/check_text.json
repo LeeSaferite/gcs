@@ -1,0 +1,1 @@
+{"type":"check","field":"tags","not":true,"text":{"compare":"contains","qualifier":"@Weapon Type@"}}

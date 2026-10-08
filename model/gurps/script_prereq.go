@@ -89,24 +89,10 @@ func (s *ScriptPrereq) Describe(_ *Entity, replacements map[string]string, _ fun
 	return i18n.Text("A custom check")
 }
 
-// Satisfied implements Prereq. An unmet prerequisite writes its description, followed by the reason it gives, if any.
-// A reason of more than one line goes on the lines below it, one level deeper.
-func (s *ScriptPrereq) Satisfied(entity *Entity, exclude any, tooltip *xbytes.InsertBuffer, prefix string, _ *bool) bool {
-	result, _ := s.evaluate(entity, exclude, tooltip, prefix)
-	return result == PrereqMet
-}
-
-// evaluate is Satisfied, returning the script's result and the reason it gives.
-func (s *ScriptPrereq) evaluate(entity *Entity, exclude any, tooltip *xbytes.InsertBuffer, prefix string) (result PrereqResult, reason string) {
-	result, reason = s.Evaluate(entity, exclude)
-	reason = strings.TrimSpace(reason)
-	if result == PrereqMet || tooltip == nil {
-		return result, reason
-	}
-	var replacements map[string]string
-	if na, ok := exclude.(nameable.Accesser); ok {
-		replacements = na.NameableReplacements()
-	}
+// writeUnmet writes what an unmet or failed result of the script says: its description, followed by the reason it
+// gives, if any, which must already be trimmed. A reason of more than one line goes on the lines below it, one level
+// deeper.
+func (s *ScriptPrereq) writeUnmet(tooltip *xbytes.InsertBuffer, entity *Entity, replacements map[string]string, prefix string, result PrereqResult, reason string) {
 	name := s.Describe(entity, replacements, plainText)
 	multiLine := strings.Contains(reason, "\n")
 	tooltip.WriteString(prefix)
@@ -129,7 +115,6 @@ func (s *ScriptPrereq) evaluate(entity *Entity, exclude any, tooltip *xbytes.Ins
 			tooltip.WriteString(strings.TrimRight(line, "\r"))
 		}
 	}
-	return result, reason
 }
 
 // Evaluate runs the script against the entity for the item given as exclude. A result of "" or "true" is met, "false"

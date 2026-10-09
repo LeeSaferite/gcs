@@ -231,6 +231,7 @@ func NewOtherEquipmentPageList(owner Rebuildable, provider gurps.ListProvider) *
 // NewSkillsPageList creates the skills page list.
 func NewSkillsPageList(owner Rebuildable, provider gurps.ListProvider) *PageList[*gurps.Skill] {
 	p := newPageList(owner, NewSkillsProvider(provider, true))
+	p.installToggleDisabledHandler(owner)
 	p.installIncrementPointsHandler(owner)
 	p.installDecrementPointsHandler(owner)
 	p.installIncrementSkillHandler(owner)
@@ -245,6 +246,7 @@ func NewSkillsPageList(owner Rebuildable, provider gurps.ListProvider) *PageList
 // NewSpellsPageList creates the spells page list.
 func NewSpellsPageList(owner Rebuildable, provider gurps.SpellListProvider) *PageList[*gurps.Spell] {
 	p := newPageList(owner, NewSpellsProvider(provider, true))
+	p.installToggleDisabledHandler(owner)
 	p.installIncrementPointsHandler(owner)
 	p.installDecrementPointsHandler(owner)
 	p.installIncrementSkillHandler(owner)
@@ -417,11 +419,9 @@ func moveSelectedEquipment(sheet *Sheet, from, to *unison.Table[*Node[*gurps.Equ
 }
 
 func (p *PageList[T]) installToggleDisabledHandler(owner Rebuildable) {
-	if t, ok := any(p.Table).(*unison.Table[*Node[*gurps.Trait]]); ok {
-		p.InstallCmdHandlers(ToggleStateItemID,
-			func(_ any) bool { return canToggleDisabled(t) },
-			func(_ any) { toggleDisabled(owner, t) })
-	}
+	p.InstallCmdHandlers(ToggleStateItemID,
+		func(_ any) bool { return canToggleDisabled(p.Table) },
+		func(_ any) { toggleDisabled(owner, p.Table) })
 }
 
 func (p *PageList[T]) installToggleEquippedHandler(owner Rebuildable) {

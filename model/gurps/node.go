@@ -68,6 +68,15 @@ type Node[T Node[T]] interface {
 
 func assertNode[T Node[T]]() {}
 
+// Disableable is implemented by the nodes that can be disabled.
+type Disableable interface {
+	// IsDisabled returns true if this node itself has been disabled. A node that isn't may still not be in effect, which
+	// is what Node.Enabled reports.
+	IsDisabled() bool
+	// SetDisabled sets whether this node itself is disabled.
+	SetDisabled(disabled bool)
+}
+
 // NodeSyncData holds the sync data the skill, spell, trait, trait modifier and equipment modifier types share: the
 // fields a library copy is expected to keep in step with its source. Their SyncData types are either aliases of it or
 // structs that embed it, which json/v2 inlines, so the on-disk format is the same as if each declared the fields

@@ -108,6 +108,7 @@ type EquipmentEditData struct {
 	Level        fxp.Int              `json:"level,omitzero"`
 	Uses         int                  `json:"uses,omitzero"`
 	Equipped     bool                 `json:"equipped,omitzero"`
+	Disabled     bool                 `json:"disabled,omitzero"`
 
 	ItemSwitch
 	preconfigurable
@@ -355,6 +356,10 @@ func (e *Equipment) Clone(from LibraryFile, owner DataOwner, parent *Equipment, 
 	other.ThirdParty = e.ThirdParty
 	other.ContainerType = e.ContainerType
 	other.copyFrom(other, &e.EquipmentEditData, false, mode)
+	if EntityFromNode(other) == nil {
+		// Disabling only means something on a sheet.
+		other.Disabled = false
+	}
 	PropagateNodeNoteClosedState(e, other)
 	if e.HasChildren() {
 		other.Children = make([]*Equipment, 0, len(e.Children))
@@ -539,7 +544,7 @@ func (e *Equipment) weightCellData(data *CellData, weigh func(forSkills bool, de
 // CellData returns the cell data information for the given column.
 func (e *Equipment) CellData(columnID int, data *CellData) {
 	data.Self = e
-	data.Dim = e.Quantity == 0
+	data.Dim = e.Quantity == 0 || !e.Enabled()
 	e1 := e
 	for !data.Dim && e1.parent != nil {
 		e1 = e1.parent
@@ -572,6 +577,7 @@ func (e *Equipment) CellData(columnID int, data *CellData) {
 	case EquipmentDescriptionColumn:
 		data.Type = cell.Text
 		data.Primary = e.String()
+		data.Disabled = !e.Enabled()
 		data.Secondary = e.SecondaryText(func(option display.Option) bool { return option.Inline() })
 		data.UnsatisfiedReason = e.UnsatisfiedReason
 		data.UnresolvedChoice = unresolvedModifierChoiceText(e, e.Modifiers)
@@ -633,17 +639,13 @@ func (e *Equipment) CellData(columnID int, data *CellData) {
 	}
 }
 
-// ReallyEquipped returns true if this equipment is equipped and has a quantity > 0 and all of its parents do too.
+// ReallyEquipped returns true if this equipment is enabled, equipped and has a quantity > 0 and all of its parents do
+// too.
 func (e *Equipment) ReallyEquipped() bool {
-	if !e.Equipped || e.Quantity <= 0 {
-		return false
-	}
-	p := e.parent
-	for p != nil {
-		if !p.Equipped || p.Quantity <= 0 {
+	for p := e; p != nil; p = p.parent {
+		if p.Disabled || !p.Equipped || p.Quantity <= 0 {
 			return false
 		}
-		p = p.parent
 	}
 	return true
 }
@@ -945,7 +947,9 @@ func ContainedWeightAdjustedForModifiers(equipment *Equipment, defUnits fxp.Weig
 	}
 	var contained fxp.Int
 	for _, one := range children {
-		contained += fxp.Int(one.ExtendedWeight(forSkills, defUnits))
+		if !one.Disabled {
+			contained += fxp.Int(one.ExtendedWeight(forSkills, defUnits))
+		}
 	}
 	return containedWeightReductionFor(equipment, defUnits, modifiers, features).apply(fxp.Weight(contained))
 }
@@ -1141,9 +1145,24 @@ func (e *Equipment) SetTL(tl string) {
 	e.TechLevel = tl
 }
 
-// Enabled returns true if this node is enabled.
+// Enabled returns true if this Equipment and all of its parents are enabled.
 func (e *Equipment) Enabled() bool {
+	for p := e; p != nil; p = p.parent {
+		if p.Disabled {
+			return false
+		}
+	}
 	return true
+}
+
+// IsDisabled implements Disableable.
+func (e *Equipment) IsDisabled() bool {
+	return e.Disabled
+}
+
+// SetDisabled implements Disableable.
+func (e *Equipment) SetDisabled(disabled bool) {
+	e.Disabled = disabled
 }
 
 // CanConvertToFromContainer returns true if this node can be converted to/from a container. A template choice container

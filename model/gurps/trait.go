@@ -970,6 +970,16 @@ func (t *Trait) Enabled() bool {
 	return true
 }
 
+// IsDisabled implements Disableable.
+func (t *Trait) IsDisabled() bool {
+	return t.Disabled
+}
+
+// SetDisabled implements Disableable.
+func (t *Trait) SetDisabled(disabled bool) {
+	t.Disabled = disabled
+}
+
 // NameWithReplacements returns the name with any replacements applied.
 func (t *Trait) NameWithReplacements() string {
 	return nameable.Apply(t.Name, t.Replacements)

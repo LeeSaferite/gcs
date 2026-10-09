@@ -110,9 +110,11 @@ func (p *ContainedQuantityPrereq) Hash(h hash.Hash) {
 func containedQuantity(children []*Equipment) fxp.Int {
 	var qty fxp.Int
 	for _, child := range children {
-		if child.IsGroup() {
+		switch {
+		case child.Disabled:
+		case child.IsGroup():
 			qty += containedQuantity(child.Children)
-		} else {
+		default:
 			qty += child.Quantity
 		}
 	}

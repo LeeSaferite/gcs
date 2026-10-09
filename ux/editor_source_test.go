@@ -776,7 +776,7 @@ func newOptionalChoiceWithinChoice(t *testing.T, c check.Checker) (sheet *Sheet,
 	t.Helper()
 	sheet, outer, inner = newChoiceWithinChoice(t, c, true)
 	inner.SetMandatoryChoice(false)
-	inner.Children[0].SetEnabled(false)
+	inner.Children[0].SetDisabled(true)
 	lib := gurps.NewTraitModifierChoice(nil, nil)
 	lib.SetMandatoryChoice(true)
 	lib.Name = inner.Name
@@ -801,7 +801,7 @@ func newChoiceWithinChoice(t *testing.T, c check.Checker, innerIsChoice bool) (s
 	outer.SetMandatoryChoice(true)
 	a := gurps.NewTraitModifier(entity, outer, false)
 	a.Name = "A"
-	a.SetEnabled(innerIsChoice)
+	a.SetDisabled(!innerIsChoice)
 	if innerIsChoice {
 		inner = gurps.NewTraitModifierChoice(entity, outer)
 		inner.SetMandatoryChoice(true)
@@ -812,7 +812,7 @@ func newChoiceWithinChoice(t *testing.T, c check.Checker, innerIsChoice bool) (s
 	for _, name := range []string{"B", "C"} {
 		option := gurps.NewTraitModifier(entity, inner, false)
 		option.Name = name
-		option.SetEnabled(name == "B")
+		option.SetDisabled(name != "B")
 		inner.Children = append(inner.Children, option)
 	}
 	outer.Children = []*gurps.TraitModifier{a, inner}

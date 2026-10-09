@@ -102,6 +102,7 @@ type SpellEditData struct {
 	SpellSyncData
 	VTTNotes     string            `json:"vtt_notes,omitzero"`
 	Replacements map[string]string `json:"replacements,omitempty"`
+	Disabled     bool              `json:"disabled,omitzero"`
 	ItemSwitch
 	preconfigurable
 	choiceGrouping
@@ -304,6 +305,10 @@ func (s *Spell) Clone(from LibraryFile, owner DataOwner, parent *Spell, mode Clo
 	other.AdjustSource(from, s.SourcedID, mode)
 	other.ThirdParty = s.ThirdParty
 	other.copyFrom(other, &s.SpellEditData, s.Container(), false, mode)
+	if EntityFromNode(other) == nil {
+		// Disabling only means something on a sheet.
+		other.Disabled = false
+	}
 	PropagateNodeNoteClosedState(s, other)
 	if s.HasChildren() {
 		other.Children = make([]*Spell, 0, len(s.Children))
@@ -406,10 +411,12 @@ func SpellsHeaderData(columnID int) HeaderData {
 // CellData returns the cell data information for the given column.
 func (s *Spell) CellData(columnID int, data *CellData) {
 	data.Self = s
+	data.Dim = !s.Enabled()
 	switch columnID {
 	case SpellDescriptionColumn:
 		data.Type = cell.Text
 		data.Primary = s.String()
+		data.Disabled = data.Dim
 		data.Secondary = s.SecondaryText(func(option display.Option) bool { return option.Inline() })
 		data.UnsatisfiedReason = s.UnsatisfiedReason
 		data.Tooltip = s.SecondaryText(func(option display.Option) bool { return option.Tooltip() })
@@ -596,6 +603,10 @@ func (s *Spell) AdjustedRelativeLevel() fxp.Int {
 // UpdateLevel updates the level of the spell, returning true if it has changed.
 func (s *Spell) UpdateLevel() bool {
 	saved := s.LevelData
+	if !s.Enabled() {
+		s.LevelData = Level{}
+		return saved != s.LevelData
+	}
 	colleges := s.CollegeWithReplacements()
 	var level Level
 	// A level computed from a script that was stopped before it could produce an answer is not kept, for the reasons
@@ -1014,9 +1025,24 @@ func (s *Spell) SetTL(tl string) {
 	}
 }
 
-// Enabled returns true if this node is enabled.
+// Enabled returns true if this Spell and all of its parents are enabled.
 func (s *Spell) Enabled() bool {
+	for p := s; p != nil; p = p.parent {
+		if p.Disabled {
+			return false
+		}
+	}
 	return true
+}
+
+// IsDisabled implements Disableable.
+func (s *Spell) IsDisabled() bool {
+	return s.Disabled
+}
+
+// SetDisabled implements Disableable.
+func (s *Spell) SetDisabled(disabled bool) {
+	s.Disabled = disabled
 }
 
 // NameableReplacements returns the replacements to be used with Nameables.

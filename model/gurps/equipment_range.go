@@ -173,7 +173,9 @@ func (m equipmentMeasure) contentsOf(e *Equipment) NumericRange {
 	options := TemplateChoiceOptions(e)
 	children := make([]NumericRange, len(options))
 	for i, one := range options {
-		children[i] = m.rangeOf(one, one.Quantity)
+		if !one.Disabled {
+			children[i] = m.rangeOf(one, one.Quantity)
+		}
 	}
 	if !IsTemplateChoiceContainer(e) {
 		return sumNumericRanges(children)

@@ -885,7 +885,7 @@ func (ex *legacyExporter) processSkillsLoop(buffer []byte) {
 			return index
 		})
 		return false
-	}, false, false, ex.entity.Skills...)
+	}, true, false, ex.entity.Skills...)
 }
 
 func (ex *legacyExporter) processSpellsLoop(buffer []byte) {
@@ -945,7 +945,7 @@ func (ex *legacyExporter) processSpellsLoop(buffer []byte) {
 			return index
 		})
 		return false
-	}, false, false, ex.entity.Spells...)
+	}, true, false, ex.entity.Spells...)
 }
 
 func (ex *legacyExporter) processEquipmentLoop(buffer []byte, carried bool) {
@@ -1050,7 +1050,7 @@ func (ex *legacyExporter) processEquipmentLoop(buffer []byte, carried bool) {
 			})
 		}
 		return false
-	}, false, false, eqpList...)
+	}, true, false, eqpList...)
 	ex.onlyTags = make(map[string]bool)
 	ex.excludedTags = make(map[string]bool)
 }

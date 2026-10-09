@@ -477,6 +477,15 @@ func addSwitchedOnCheckBox(parent *unison.Panel, fieldData *bool) *CheckBox {
 	return checkBox
 }
 
+// addEnabledCheckBox adds the check box that enables or disables an item, when the item is on a sheet, the only place
+// where disabling means anything.
+func addEnabledCheckBox[T gurps.Node[T]](parent *unison.Panel, target T, disabled *bool) {
+	if gurps.EntityFromNode(target) != nil {
+		parent.AddChild(unison.NewPanel())
+		addInvertedCheckBox(parent, i18n.Text("Enabled"), disabled)
+	}
+}
+
 func addInvertedCheckBox(parent *unison.Panel, labelText string, fieldData *bool) *CheckBox {
 	checkBox := NewCheckBox(nil, "", labelText,
 		func() check.Enum { return check.FromBool(!*fieldData) },

@@ -677,7 +677,7 @@ func TestApplyTemplateCountsModifierPromptsBeforeAskingThem(t *testing.T) {
 	uxtest.SwapForTest(t, &promptForTraitModifiers, func(info *modifierPromptInfo, modifiers []*gurps.TraitModifier) (changed, canceled bool) {
 		steps = append(steps, step{row: info.name, step: info.step, steps: info.steps})
 		// Answer as the user must, by making the choice.
-		gurps.ModifierChoiceOptions(modifiers[0])[0].SetEnabled(true)
+		gurps.ModifierChoiceOptions(modifiers[0])[0].SetDisabled(false)
 		return true, false
 	})
 	uxtest.SwapForTest(t, &promptForEquipmentModifiers, func(info *modifierPromptInfo, _ []*gurps.EquipmentModifier) (changed, canceled bool) {

@@ -50,6 +50,7 @@ func initSkillEditor(e *editor[*gurps.Skill, *gurps.SkillEditData], content *uni
 	if !e.target.Container() {
 		addSwitchedOnCheckBox(content, &e.editorData.SwitchedOn)
 	}
+	addEnabledCheckBox(content, e.target, &e.editorData.Disabled)
 	addPreconfigurable(e, content)
 	addPickSeparately(content, e.target, &e.editorData.PickSeparately)
 	entity := gurps.EntityFromNode(e.target)

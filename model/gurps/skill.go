@@ -110,6 +110,7 @@ type SkillEditData struct {
 	SkillSyncData
 	VTTNotes     string            `json:"vtt_notes,omitzero"`
 	Replacements map[string]string `json:"replacements,omitempty"`
+	Disabled     bool              `json:"disabled,omitzero"`
 	ItemSwitch
 	preconfigurable
 	choiceGrouping
@@ -324,6 +325,10 @@ func (s *Skill) Clone(from LibraryFile, owner DataOwner, parent *Skill, mode Clo
 	other.AdjustSource(from, s.SourcedID, mode)
 	other.ThirdParty = s.ThirdParty
 	other.copyFrom(other, &s.SkillEditData, s.Container(), false, mode, s.IsTechnique())
+	if EntityFromNode(other) == nil {
+		// Disabling only means something on a sheet.
+		other.Disabled = false
+	}
 	PropagateNodeNoteClosedState(s, other)
 	if s.HasChildren() {
 		other.Children = make([]*Skill, 0, len(s.Children))
@@ -410,10 +415,12 @@ func SkillsHeaderData(columnID int) HeaderData {
 // CellData returns the cell data information for the given column.
 func (s *Skill) CellData(columnID int, data *CellData) {
 	data.Self = s
+	data.Dim = !s.Enabled()
 	switch columnID {
 	case SkillDescriptionColumn:
 		data.Type = cell.Text
 		data.Primary = s.String()
+		data.Disabled = data.Dim
 		data.Secondary = s.SecondaryText(func(option display.Option) bool { return option.Inline() })
 		data.UnsatisfiedReason = s.UnsatisfiedReason
 		data.Tooltip = s.SecondaryText(func(option display.Option) bool { return option.Tooltip() })
@@ -963,6 +970,10 @@ func CalculateTechniqueLevel(e *Entity, replacements map[string]string, name, sp
 // UpdateLevel updates the level of the skill, returning true if it, or the default the skill settled on, has changed.
 func (s *Skill) UpdateLevel() bool {
 	savedLevel := s.LevelData
+	if !s.Enabled() {
+		s.LevelData = Level{}
+		return savedLevel != s.LevelData
+	}
 	savedDefaultedFrom := s.DefaultedFrom
 	var level Level
 	if anyScriptAbandonedDuring(EntityFromNode(s), func() {
@@ -1273,9 +1284,24 @@ func (s *Skill) SetTL(tl string) {
 	}
 }
 
-// Enabled returns true if this node is enabled.
+// Enabled returns true if this Skill and all of its parents are enabled.
 func (s *Skill) Enabled() bool {
+	for p := s; p != nil; p = p.parent {
+		if p.Disabled {
+			return false
+		}
+	}
 	return true
+}
+
+// IsDisabled implements Disableable.
+func (s *Skill) IsDisabled() bool {
+	return s.Disabled
+}
+
+// SetDisabled implements Disableable.
+func (s *Skill) SetDisabled(disabled bool) {
+	s.Disabled = disabled
 }
 
 // NameWithReplacements returns the name with any replacements applied.

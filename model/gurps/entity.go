@@ -732,11 +732,11 @@ func (e *Entity) forEachActiveFeatureList(fn func(owner, mod fmt.Stringer, level
 	Traverse(func(s *Skill) bool {
 		fn(s, nil, s, s.ActiveFeatures())
 		return false
-	}, false, true, e.Skills...)
+	}, true, true, e.Skills...)
 	Traverse(func(s *Spell) bool {
 		fn(s, nil, s, s.ActiveFeatures())
 		return false
-	}, false, true, e.Spells...)
+	}, true, true, e.Spells...)
 	Traverse(func(eqp *Equipment) bool {
 		if eqp.ReallyEquipped() {
 			forEachActiveEquipmentFeatureList(eqp, func(mod fmt.Stringer, list Features) {
@@ -890,7 +890,7 @@ func (e *Entity) applyEquipmentPenalties() {
 			e.features.skillBonuses = append(e.features.skillBonuses, penalty)
 		}
 		return false
-	}, false, true, e.Skills...)
+	}, true, true, e.Skills...)
 	Traverse(func(s *Spell) bool {
 		if s.takesEquipmentPenalty {
 			penalty := NewSpellBonus()
@@ -901,7 +901,7 @@ func (e *Entity) applyEquipmentPenalties() {
 			e.features.spellBonuses = append(e.features.spellBonuses, penalty)
 		}
 		return false
-	}, false, true, e.Spells...)
+	}, true, true, e.Spells...)
 }
 
 // processSkillAndSpellPrereqs evaluates the prerequisites of every skill and spell, recording the reason each is
@@ -1068,11 +1068,11 @@ func (e *Entity) PointsBreakdown() *PointsBreakdown {
 	Traverse(func(s *Skill) bool {
 		pb.Skills += s.Points
 		return false
-	}, false, true, e.Skills...)
+	}, true, true, e.Skills...)
 	Traverse(func(s *Spell) bool {
 		pb.Spells += s.Points
 		return false
-	}, false, true, e.Spells...)
+	}, true, true, e.Spells...)
 	return &pb
 }
 
@@ -1111,7 +1111,9 @@ func calculateSingleTraitPoints(t *Trait, pb *PointsBreakdown) {
 func (e *Entity) WealthCarried() fxp.Int {
 	var value fxp.Int
 	for _, one := range e.CarriedEquipment {
-		value += one.ExtendedValue()
+		if !one.Disabled {
+			value += one.ExtendedValue()
+		}
 	}
 	return value
 }
@@ -1120,7 +1122,9 @@ func (e *Entity) WealthCarried() fxp.Int {
 func (e *Entity) WealthNotCarried() fxp.Int {
 	var value fxp.Int
 	for _, one := range e.OtherEquipment {
-		value += one.ExtendedValue()
+		if !one.Disabled {
+			value += one.ExtendedValue()
+		}
 	}
 	return value
 }
@@ -1507,7 +1511,7 @@ func (e *Entity) SkillNamed(name, specialization string, requirePoints bool, exc
 			}
 		}
 		return false
-	}, false, true, e.Skills...)
+	}, true, true, e.Skills...)
 	return list
 }
 
@@ -1554,7 +1558,7 @@ func (e *Entity) SkillMatching(nameCriteria, specializationCriteria criteria.Tex
 			}
 		}
 		return false
-	}, false, true, e.Skills...)
+	}, true, true, e.Skills...)
 	return list
 }
 
@@ -1611,7 +1615,9 @@ func (e *Entity) WeightUnit() fxp.WeightUnit {
 func (e *Entity) WeightCarried(forSkills bool) fxp.Weight {
 	var total fxp.Weight
 	for _, one := range e.CarriedEquipment {
-		total += one.ExtendedWeight(forSkills, e.SheetSettings.DefaultWeightUnits)
+		if !one.Disabled {
+			total += one.ExtendedWeight(forSkills, e.SheetSettings.DefaultWeightUnits)
+		}
 	}
 	return total
 }
@@ -1859,7 +1865,7 @@ func (e *Entity) Weapons(melee, includeUnequipped, excludeHidden bool) []*Weapon
 			}
 		}
 		return false
-	}, false, false, e.CarriedEquipment...)
+	}, true, false, e.CarriedEquipment...)
 	if includeUnequipped {
 		Traverse(func(eqp *Equipment) bool {
 			if eqp.Quantity > 0 {
@@ -1872,7 +1878,7 @@ func (e *Entity) Weapons(melee, includeUnequipped, excludeHidden bool) []*Weapon
 				}
 			}
 			return false
-		}, false, false, e.OtherEquipment...)
+		}, true, false, e.OtherEquipment...)
 	}
 	Traverse(func(s *Skill) bool {
 		for _, w := range s.Weapons {
@@ -1881,7 +1887,7 @@ func (e *Entity) Weapons(melee, includeUnequipped, excludeHidden bool) []*Weapon
 			}
 		}
 		return false
-	}, false, true, e.Skills...)
+	}, true, true, e.Skills...)
 	Traverse(func(s *Spell) bool {
 		for _, w := range s.Weapons {
 			if w.IsMelee() == melee && (!excludeHidden || !w.Hide) {
@@ -1889,7 +1895,7 @@ func (e *Entity) Weapons(melee, includeUnequipped, excludeHidden bool) []*Weapon
 			}
 		}
 		return false
-	}, false, true, e.Spells...)
+	}, true, true, e.Spells...)
 	list := make([]*Weapon, 0, len(m))
 	for _, v := range m {
 		list = append(list, v)

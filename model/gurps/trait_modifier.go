@@ -559,10 +559,15 @@ func (t *TraitModifier) Enabled() bool {
 	return !t.Disabled || t.Container()
 }
 
-// SetEnabled makes the node enabled, if possible.
-func (t *TraitModifier) SetEnabled(enabled bool) {
+// IsDisabled implements Disableable.
+func (t *TraitModifier) IsDisabled() bool {
+	return t.Disabled
+}
+
+// SetDisabled implements Disableable. A container can't be disabled.
+func (t *TraitModifier) SetDisabled(disabled bool) {
 	if !t.Container() {
-		t.Disabled = !enabled
+		t.Disabled = disabled
 	}
 }
 

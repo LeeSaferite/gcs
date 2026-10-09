@@ -91,6 +91,7 @@ func initEquipmentItemEditor(e *editor[*gurps.Equipment, *gurps.EquipmentEditDat
 	content.AddChild(unison.NewPanel())
 	addCheckBox(content, i18n.Text("Ignore weight for skills"), &e.editorData.WeightIgnoredForSkills)
 	addSwitchedOnCheckBox(content, &e.editorData.SwitchedOn)
+	addEnabledCheckBox(content, e.target, &e.editorData.Disabled)
 	addPreconfigurable(e, content)
 	resolvedMaxUses := func() int { return cloneEquipmentWithOverlay(e.target, e.editorData).ResolvedMaxUses() }
 	usesLabel := i18n.Text("Uses Left")
@@ -139,6 +140,7 @@ func initEquipmentGroupEditor(e *editor[*gurps.Equipment, *gurps.EquipmentEditDa
 		content.AddChild(unison.NewPanel())
 		addCheckBox(content, i18n.Text("Equipped"), &e.editorData.Equipped)
 	}
+	addEnabledCheckBox(content, e.target, &e.editorData.Disabled)
 	addTagsLabelAndField(content, &e.editorData.Tags)
 	addPickSeparately(content, e.target, &e.editorData.PickSeparately)
 	addPageRefLabelAndField(content, &e.editorData.PageRef)

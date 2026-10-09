@@ -513,10 +513,15 @@ func (e *EquipmentModifier) Enabled() bool {
 	return !e.Disabled || e.Container()
 }
 
-// SetEnabled makes the node enabled, if possible.
-func (e *EquipmentModifier) SetEnabled(enabled bool) {
+// IsDisabled implements Disableable.
+func (e *EquipmentModifier) IsDisabled() bool {
+	return e.Disabled
+}
+
+// SetDisabled implements Disableable. A container can't be disabled.
+func (e *EquipmentModifier) SetDisabled(disabled bool) {
 	if !e.Container() {
-		e.Disabled = !enabled
+		e.Disabled = disabled
 	}
 }
 

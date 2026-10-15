@@ -124,7 +124,7 @@ func (p *SpellPrereq) Satisfied(entity *Entity, exclude any, tooltip *xbytes.Ins
 	count := 0
 	colleges := make(map[string]bool)
 	Traverse(func(sp *Spell) bool {
-		if exclude == sp || sp.AdjustedPoints(nil) == 0 {
+		if excludedFromPrereqs(exclude, sp) || sp.AdjustedPoints(nil) == 0 {
 			return false
 		}
 		// Don't count a spell that, in turn, directly requires the spell being checked, since doing so would create a

@@ -86,7 +86,7 @@ func (p *TraitPrereq) Satisfied(entity *Entity, exclude any, tooltip *xbytes.Ins
 	}
 	satisfied := false
 	Traverse(func(t *Trait) bool {
-		if exclude == t || !p.NameCriteria.Matches(replacements, t.NameWithReplacements()) {
+		if excludedFromPrereqs(exclude, t) || !p.NameCriteria.Matches(replacements, t.NameWithReplacements()) {
 			return false
 		}
 		notes := t.Notes()

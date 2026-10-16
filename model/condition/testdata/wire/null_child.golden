@@ -1,0 +1,15 @@
+{
+	"type": "group",
+	"mode": "any",
+	"children": [
+		null,
+		{
+			"type": "const",
+			"value": true
+		},
+		"text",
+		{
+			"type": "nope"
+		}
+	]
+}

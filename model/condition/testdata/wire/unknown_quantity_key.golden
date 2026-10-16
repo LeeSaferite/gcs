@@ -1,0 +1,8 @@
+{
+	"type": "count",
+	"of": "spells",
+	"quantity": {
+		"compare": "around",
+		"qualifier": 3
+	}
+}

@@ -1,0 +1,11 @@
+{
+	"type": "const",
+	"value": true,
+	"later": [
+		1,
+		{
+			"x": "y"
+		}
+	],
+	"z": {}
+}

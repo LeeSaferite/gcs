@@ -1,0 +1,5 @@
+{
+	"type": "script",
+	"name": "Has @Thing@",
+	"script": "entity.has(\"@Thing@\")"
+}

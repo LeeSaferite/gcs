@@ -16,7 +16,6 @@ import (
 	"github.com/richardwilkes/gcs/v5/model/gurps/enums/prereq"
 	"github.com/richardwilkes/gcs/v5/model/nameable"
 	"github.com/richardwilkes/toolbox/v2/i18n"
-	"github.com/richardwilkes/toolbox/v2/xbytes"
 	"github.com/richardwilkes/toolbox/v2/xhash"
 )
 
@@ -78,58 +77,6 @@ func (p *SkillPrereq) FillWithNameableKeys(m, existing map[string]string) {
 		p.OptionalSpecializationCriteria.Qualifier,
 		p.TagsCriteria.Qualifier,
 	)
-}
-
-// Satisfied implements Prereq.
-func (p *SkillPrereq) Satisfied(entity *Entity, exclude any, tooltip *xbytes.InsertBuffer, prefix string, _ *bool) bool {
-	if entity == nil {
-		return true
-	}
-	var replacements map[string]string
-	if na, ok := exclude.(nameable.Accesser); ok {
-		replacements = na.NameableReplacements()
-	}
-	satisfied := false
-	var techLevel *string
-	if sk, ok := exclude.(*Skill); ok {
-		techLevel = sk.TechLevel
-	}
-	// The criteria are resolved once rather than once per skill, and the name is tested first, since it rules out
-	// nearly every skill before the points, which take a walk of the skill's features to find, are looked at.
-	name := p.NameCriteria.Matcher(replacements)
-	specialization := p.SpecializationCriteria.Matcher(replacements)
-	optionalSpecialization := p.OptionalSpecializationCriteria.Matcher(replacements)
-	Traverse(func(sk *Skill) bool {
-		if exclude == sk {
-			return false
-		}
-		if !name.Matches(sk.NameWithReplacements()) ||
-			!specialization.Matches(sk.SpecializationWithReplacements()) ||
-			!optionalSpecialization.Matches(sk.OptionalSpecializationWithReplacements()) {
-			return false
-		}
-		// A skill with no points spent on it doesn't count, even if it has a level from a default.
-		if points := sk.AdjustedPoints(nil); points == 0 || !p.PointsCriteria.Matches(points) ||
-			(p.TagsCriteria.Compare != criteria.AnyText && !p.TagsCriteria.MatchesList(replacements, sk.Tags...)) {
-			return false
-		}
-		satisfied = p.LevelCriteria.Matches(sk.LevelData.Level)
-		if satisfied && techLevel != nil {
-			satisfied = sk.TechLevel == nil || *techLevel == *sk.TechLevel
-		}
-		return satisfied
-	}, true, true, entity.Skills...)
-	if !p.Has {
-		satisfied = !satisfied
-	}
-	if !satisfied && tooltip != nil {
-		tooltip.WriteString(prefix)
-		tooltip.WriteString(p.Describe(entity, replacements, plainText))
-		if techLevel != nil {
-			tooltip.WriteString(i18n.Text(" with a matching tech level"))
-		}
-	}
-	return satisfied
 }
 
 // Describe implements Prereq.

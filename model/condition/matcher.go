@@ -40,6 +40,11 @@ func NewMatcher(n Node, h Host, opt Options) *Matcher {
 // State returns the state of the tree for item, as Evaluate with YesNo would. A nil tree is Skipped, and one with a
 // problem Failed. The error is the context's, when it was done before the state was decided.
 func (m *Matcher) State(ctx context.Context, item Item) (State, error) {
+	return m.StateFor(ctx, item, item)
+}
+
+// StateFor is State with self and the subject apart, as EvaluateFor has them.
+func (m *Matcher) StateFor(ctx context.Context, self, subject Item) (State, error) {
 	switch {
 	case m.root == nil:
 		return Skipped, nil
@@ -51,10 +56,10 @@ func (m *Matcher) State(ctx context.Context, item Item) (State, error) {
 	}
 	e := m.e
 	e.ctx = ctx
-	e.self = item
+	e.self = self
 	e.budget = e.opt.Budget
 	e.exhausted = false
-	state := e.test(m.root, frame{subject: item}).state
+	state := e.test(m.root, frame{subject: subject}).state
 	err := e.err
 	e.ctx, e.err, e.self = nil, nil, nil
 	clear(e.replacements)

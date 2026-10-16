@@ -75,6 +75,8 @@ func TestSelfTokens(t *testing.T) {
 		{"empty list token", checkText("v", criteria.IsText, "x{self.empty}"), map[string]Value{"v": textValue("x")}, Met},
 		{"list value split", checkText("v", criteria.IsText, "Water, {self.college} ,"), map[string]Value{"v": listValue("Mind", "fire")}, Met},
 		{"list value empty", checkText("v", criteria.IsText, " , {self.empty}"), map[string]Value{"v": listValue()}, Met},
+		{"whole value not split", checkText("v", criteria.IsText, "Water, {self.college}"), map[string]Value{"v": wholeValue("Water, fire")}, Met},
+		{"whole value not split 2", checkText("v", criteria.IsText, "Water, {self.college}"), map[string]Value{"v": wholeValue("fire")}, Unmet},
 		{"text value untrimmed", checkText("v", criteria.StartsWithText, " {self.college} "), map[string]Value{"v": textValue(" fire ball")}, Met},
 		{"text value untrimmed no", checkText("v", criteria.StartsWithText, " {self.college} "), map[string]Value{"v": textValue("fire ball")}, Unmet},
 		{"list piece unicode trim", checkText("v", criteria.IsText, "\u00a0{self.college}\v, x"), map[string]Value{"v": listValue("fire")}, Met},

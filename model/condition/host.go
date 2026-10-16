@@ -90,4 +90,7 @@ type Value struct {
 	List   []string
 	Number fxp.Int // Weight values are in pounds
 	Bool   bool
+	// Whole marks a List of free text, such as notes, whose elements are compared with the whole of a qualifier rather
+	// than with each of its comma-separated parts.
+	Whole bool
 }

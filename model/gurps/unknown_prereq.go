@@ -16,7 +16,6 @@ import (
 
 	"github.com/richardwilkes/gcs/v5/model/gurps/enums/prereq"
 	"github.com/richardwilkes/toolbox/v2/i18n"
-	"github.com/richardwilkes/toolbox/v2/xbytes"
 	"github.com/richardwilkes/toolbox/v2/xhash"
 )
 
@@ -68,15 +67,6 @@ func (p *UnknownPrereq) Clone(parent *PrereqList) Prereq {
 
 // FillWithNameableKeys implements Prereq.
 func (p *UnknownPrereq) FillWithNameableKeys(_, _ map[string]string) {
-}
-
-// Satisfied implements Prereq. An unknown prerequisite is never satisfied.
-func (p *UnknownPrereq) Satisfied(_ *Entity, _ any, tooltip *xbytes.InsertBuffer, prefix string, _ *bool) bool {
-	if tooltip != nil {
-		tooltip.WriteString(prefix)
-		tooltip.WriteString(p.Describe(nil, nil, plainText))
-	}
-	return false
 }
 
 // Describe implements Prereq.

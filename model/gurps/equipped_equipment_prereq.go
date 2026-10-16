@@ -17,7 +17,6 @@ import (
 	"github.com/richardwilkes/gcs/v5/model/gurps/enums/prereq"
 	"github.com/richardwilkes/gcs/v5/model/nameable"
 	"github.com/richardwilkes/toolbox/v2/i18n"
-	"github.com/richardwilkes/toolbox/v2/xbytes"
 	"github.com/richardwilkes/toolbox/v2/xhash"
 )
 
@@ -80,45 +79,6 @@ func (p *EquippedEquipmentPrereq) FillWithNameableKeys(m, existing map[string]st
 		p.TagsCriteria.Qualifier,
 	)
 	p.fillWithModifierNameableKeys(m, existing)
-}
-
-// Satisfied implements Prereq. Only an unmet prerequisite to have equipment equipped sets hasEquipmentPenalty.
-func (p *EquippedEquipmentPrereq) Satisfied(entity *Entity, exclude any, tooltip *xbytes.InsertBuffer, prefix string, hasEquipmentPenalty *bool) bool {
-	if entity == nil {
-		return true
-	}
-	var replacements map[string]string
-	if na, ok := exclude.(nameable.Accesser); ok {
-		replacements = na.NameableReplacements()
-	}
-	carried := p.Type == prereq.CarriedEquipment
-	satisfied := false
-	Traverse(func(eqp *Equipment) bool {
-		held := eqp.ReallyEquipped()
-		if carried {
-			held = !held && eqp.Enabled()
-			for one := eqp; held && one != nil; one = one.parent {
-				held = one.Quantity > 0
-			}
-		}
-		satisfied = exclude != eqp && held && p.NameCriteria.Matches(replacements, eqp.NameWithReplacements()) &&
-			p.TagsCriteria.MatchesList(replacements, eqp.Tags...) &&
-			modifiersMeet(&p.ModifierCriteria, replacements, eqp.Modifiers)
-		return satisfied
-	}, false, false, entity.CarriedEquipment...)
-	if p.Not {
-		satisfied = !satisfied
-	}
-	if !satisfied {
-		if !p.Not && !carried && hasEquipmentPenalty != nil {
-			*hasEquipmentPenalty = true
-		}
-		if tooltip != nil {
-			tooltip.WriteString(prefix)
-			tooltip.WriteString(p.Describe(entity, replacements, plainText))
-		}
-	}
-	return satisfied
 }
 
 // Describe implements Prereq.

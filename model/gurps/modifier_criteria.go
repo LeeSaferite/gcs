@@ -27,12 +27,6 @@ type ModifierCriteria struct {
 }
 
 // criteriaModifier is what ModifierCriteria checks of a modifier.
-type criteriaModifier[M Node[M]] interface {
-	Node[M]
-	NameWithReplacements() string
-	LocalNotesWithReplacements() string
-	TagList() []string
-}
 
 // hasModifierCriteria returns true if any of the modifier criteria asks for something.
 func (c *ModifierCriteria) hasModifierCriteria() bool {
@@ -42,19 +36,6 @@ func (c *ModifierCriteria) hasModifierCriteria() bool {
 
 // modifiersMeet returns true if there are no modifier criteria, or one of the enabled modifiers, containers left out,
 // meets them all.
-func modifiersMeet[M criteriaModifier[M]](c *ModifierCriteria, replacements map[string]string, modifiers []M) bool {
-	if !c.hasModifierCriteria() {
-		return true
-	}
-	found := false
-	Traverse(func(mod M) bool {
-		found = c.ModifierNameCriteria.Matches(replacements, mod.NameWithReplacements()) &&
-			c.ModifierNotesCriteria.Matches(replacements, mod.LocalNotesWithReplacements()) &&
-			c.ModifierTagsCriteria.MatchesList(replacements, mod.TagList()...)
-		return found
-	}, true, true, modifiers...)
-	return found
-}
 
 // describeModifier returns the clause that describes the modifier criteria, such as " with a modifier whose name is
 // Fine", or an empty string when they ask for nothing.

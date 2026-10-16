@@ -25,6 +25,7 @@ func TestCheckValueKinds(t *testing.T) {
 	subject := newItem("Fireball", map[string]Value{
 		"tags":    listValue("Fire", "Missile"),
 		"none":    listValue(),
+		"notes":   wholeValue("sharp, keen", "dull"),
 		"level":   numberValue(3),
 		"weight":  weightValue(5),
 		"on":      boolValue(true),
@@ -47,6 +48,9 @@ func TestCheckValueKinds(t *testing.T) {
 		{"list is not", checkText("tags", criteria.IsNotText, "Water, Fire"), Unmet, 0, false},
 		{"empty list is not", checkText("none", criteria.IsNotText, "x"), Met, 1, true},
 		{"empty list is", checkText("none", criteria.IsText, "x"), Unmet, 0, false},
+		{"whole list is", checkText("notes", criteria.IsText, "sharp, keen"), Met, 1, true},
+		{"whole list no comma split", checkText("notes", criteria.IsText, "keen, dull"), Unmet, 0, false},
+		{"whole list is not", checkText("notes", criteria.IsNotText, "dull"), Unmet, 0, false},
 		{"number", &Check{Field: "level", Number: numberCrit(criteria.AtLeastNumber, 3)}, Met, 1, true},
 		{"weight", &Check{Field: "weight", Weight: weightCrit(criteria.AtMostNumber, 4)}, Unmet, 0, false},
 		{"bool true", &Check{Field: "on"}, Met, 1, true},

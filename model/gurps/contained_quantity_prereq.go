@@ -16,7 +16,6 @@ import (
 	"github.com/richardwilkes/gcs/v5/model/fxp"
 	"github.com/richardwilkes/gcs/v5/model/gurps/enums/prereq"
 	"github.com/richardwilkes/toolbox/v2/i18n"
-	"github.com/richardwilkes/toolbox/v2/xbytes"
 	"github.com/richardwilkes/toolbox/v2/xhash"
 )
 
@@ -64,24 +63,6 @@ func (p *ContainedQuantityPrereq) Clone(parent *PrereqList) Prereq {
 
 // FillWithNameableKeys implements Prereq.
 func (p *ContainedQuantityPrereq) FillWithNameableKeys(_, _ map[string]string) {
-}
-
-// Satisfied implements Prereq.
-func (p *ContainedQuantityPrereq) Satisfied(_ *Entity, exclude any, tooltip *xbytes.InsertBuffer, prefix string, _ *bool) bool {
-	satisfied := false
-	if eqp, ok := exclude.(*Equipment); ok {
-		if satisfied = !eqp.Container(); !satisfied {
-			satisfied = p.QualifierCriteria.Matches(containedQuantity(eqp.Children))
-		}
-	}
-	if !p.Has {
-		satisfied = !satisfied
-	}
-	if !satisfied && tooltip != nil {
-		tooltip.WriteString(prefix)
-		tooltip.WriteString(p.Describe(nil, nil, plainText))
-	}
-	return satisfied
 }
 
 // Describe implements Prereq.

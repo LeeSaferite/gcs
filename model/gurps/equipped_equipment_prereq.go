@@ -17,7 +17,6 @@ import (
 	"github.com/richardwilkes/gcs/v5/model/gurps/enums/prereq"
 	"github.com/richardwilkes/gcs/v5/model/nameable"
 	"github.com/richardwilkes/toolbox/v2/i18n"
-	"github.com/richardwilkes/toolbox/v2/xbytes"
 	"github.com/richardwilkes/toolbox/v2/xhash"
 )
 
@@ -69,34 +68,6 @@ func (p *EquippedEquipmentPrereq) FillWithNameableKeys(m, existing map[string]st
 		p.NameCriteria.Qualifier,
 		p.TagsCriteria.Qualifier,
 	)
-}
-
-// Satisfied implements Prereq.
-func (p *EquippedEquipmentPrereq) Satisfied(entity *Entity, exclude any, tooltip *xbytes.InsertBuffer, prefix string, hasEquipmentPenalty *bool) bool {
-	if entity == nil {
-		return true
-	}
-	var replacements map[string]string
-	if na, ok := exclude.(nameable.Accesser); ok {
-		replacements = na.NameableReplacements()
-	}
-	satisfied := false
-	Traverse(func(eqp *Equipment) bool {
-		satisfied = exclude != eqp && eqp.ReallyEquipped() &&
-			p.NameCriteria.Matches(replacements, eqp.NameWithReplacements()) &&
-			p.TagsCriteria.MatchesList(replacements, eqp.Tags...)
-		return satisfied
-	}, false, false, entity.CarriedEquipment...)
-	if !satisfied {
-		if hasEquipmentPenalty != nil {
-			*hasEquipmentPenalty = true
-		}
-		if tooltip != nil {
-			tooltip.WriteString(prefix)
-			tooltip.WriteString(p.Describe(entity, replacements, plainText))
-		}
-	}
-	return satisfied
 }
 
 // Describe implements Prereq.

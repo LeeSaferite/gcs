@@ -16,7 +16,6 @@ import (
 	"github.com/richardwilkes/gcs/v5/model/fxp"
 	"github.com/richardwilkes/gcs/v5/model/gurps/enums/prereq"
 	"github.com/richardwilkes/toolbox/v2/i18n"
-	"github.com/richardwilkes/toolbox/v2/xbytes"
 	"github.com/richardwilkes/toolbox/v2/xhash"
 )
 
@@ -67,26 +66,6 @@ func (p *AttributePrereq) Clone(parent *PrereqList) Prereq {
 
 // FillWithNameableKeys implements Prereq.
 func (p *AttributePrereq) FillWithNameableKeys(_, _ map[string]string) {
-}
-
-// Satisfied implements Prereq.
-func (p *AttributePrereq) Satisfied(entity *Entity, _ any, tooltip *xbytes.InsertBuffer, prefix string, _ *bool) bool {
-	if entity == nil {
-		return true
-	}
-	value := entity.ResolveAttributeCurrent(p.Which)
-	if p.CombinedWith != "" {
-		value += entity.ResolveAttributeCurrent(p.CombinedWith)
-	}
-	satisfied := p.QualifierCriteria.Matches(value)
-	if !p.Has {
-		satisfied = !satisfied
-	}
-	if !satisfied && tooltip != nil {
-		tooltip.WriteString(prefix)
-		tooltip.WriteString(p.Describe(entity, nil, plainText))
-	}
-	return satisfied
 }
 
 // Describe implements Prereq. Attributes are named as the entity, which may be nil, defines them.

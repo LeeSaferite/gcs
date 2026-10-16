@@ -1,0 +1,11 @@
+{
+	"type": "check",
+	"field": "name",
+	"text": {
+		"compare": "is",
+		"qualifier": "Fire"
+	},
+	"future": {
+		"a": 1
+	}
+}

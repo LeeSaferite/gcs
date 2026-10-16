@@ -1,0 +1,1 @@
+{"type":"group","mode":"AT_LEAST","n":1,"children":[{"type":"check","field":"name","text":{"compare":"Starts_With","qualifier":"F"}},{"type":"compare","left":{"aggregate":"COUNT","of":"spells"},"op":"More_Than","right":{"value":3}},{"type":"count","of":"spells","quantity":{"compare":"IS","qualifier":2}}]}

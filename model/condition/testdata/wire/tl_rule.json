@@ -1,0 +1,1 @@
+{"type":"check","field":"tech_level","text":{"compare":"is","qualifier":"{self.tech_level}"},"absent_passes":true}

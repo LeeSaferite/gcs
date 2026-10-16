@@ -1,0 +1,30 @@
+{
+	"type": "group",
+	"mode": "all",
+	"children": [
+		{
+			"type": "count",
+			"of": "spells",
+			"group_by": "college"
+		},
+		{
+			"type": "compare",
+			"left": {
+				"value": 2
+			},
+			"op": "is",
+			"right": {
+				"value": 2
+			}
+		},
+		{
+			"type": "check",
+			"field": "name"
+		},
+		{
+			"type": "count",
+			"of": "spells",
+			"quantity": {}
+		}
+	]
+}

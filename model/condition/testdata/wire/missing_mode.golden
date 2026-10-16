@@ -1,0 +1,9 @@
+{
+	"type": "group",
+	"children": [
+		{
+			"type": "const",
+			"value": true
+		}
+	]
+}

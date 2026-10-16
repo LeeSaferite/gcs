@@ -1,0 +1,23 @@
+{
+	"type": "count",
+	"of": "spells",
+	"where": {
+		"type": "check",
+		"field": "college",
+		"text": {
+			"compare": "is",
+			"qualifier": "Fire"
+		}
+	},
+	"quantity": {
+		"compare": "at_least",
+		"qualifier": 5
+	},
+	"group_by": "college",
+	"per_group": {
+		"compare": "is",
+		"qualifier": 2
+	},
+	"exclusive": true,
+	"not": true
+}

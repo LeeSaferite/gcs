@@ -1,0 +1,8 @@
+{
+	"type": "compare",
+	"left": 7,
+	"op": "is",
+	"right": {
+		"value": 2
+	}
+}

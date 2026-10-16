@@ -16,7 +16,6 @@ import (
 	"github.com/richardwilkes/gcs/v5/model/gurps/enums/prereq"
 	"github.com/richardwilkes/gcs/v5/model/nameable"
 	"github.com/richardwilkes/toolbox/v2/i18n"
-	"github.com/richardwilkes/toolbox/v2/xbytes"
 	"github.com/richardwilkes/toolbox/v2/xhash"
 )
 
@@ -75,47 +74,6 @@ func (p *SkillPrereq) FillWithNameableKeys(m, existing map[string]string) {
 		p.SpecializationCriteria.Qualifier,
 		p.OptionalSpecializationCriteria.Qualifier,
 	)
-}
-
-// Satisfied implements Prereq.
-func (p *SkillPrereq) Satisfied(entity *Entity, exclude any, tooltip *xbytes.InsertBuffer, prefix string, _ *bool) bool {
-	if entity == nil {
-		return true
-	}
-	var replacements map[string]string
-	if na, ok := exclude.(nameable.Accesser); ok {
-		replacements = na.NameableReplacements()
-	}
-	satisfied := false
-	var techLevel *string
-	if sk, ok := exclude.(*Skill); ok {
-		techLevel = sk.TechLevel
-	}
-	Traverse(func(sk *Skill) bool {
-		// A skill with no points spent on it doesn't count, even if it has a level from a default.
-		if exclude == sk || sk.AdjustedPoints(nil) == 0 ||
-			!p.NameCriteria.Matches(replacements, sk.NameWithReplacements()) ||
-			!p.SpecializationCriteria.Matches(replacements, sk.SpecializationWithReplacements()) ||
-			!p.OptionalSpecializationCriteria.Matches(replacements, sk.OptionalSpecializationWithReplacements()) {
-			return false
-		}
-		satisfied = p.LevelCriteria.Matches(sk.LevelData.Level)
-		if satisfied && techLevel != nil {
-			satisfied = sk.TechLevel == nil || *techLevel == *sk.TechLevel
-		}
-		return satisfied
-	}, false, true, entity.Skills...)
-	if !p.Has {
-		satisfied = !satisfied
-	}
-	if !satisfied && tooltip != nil {
-		tooltip.WriteString(prefix)
-		tooltip.WriteString(p.Describe(entity, replacements, plainText))
-		if techLevel != nil {
-			tooltip.WriteString(i18n.Text(" with a matching tech level"))
-		}
-	}
-	return satisfied
 }
 
 // Describe implements Prereq.

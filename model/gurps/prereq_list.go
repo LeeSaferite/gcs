@@ -18,7 +18,6 @@ import (
 	"github.com/richardwilkes/gcs/v5/model/criteria"
 	"github.com/richardwilkes/gcs/v5/model/gurps/enums/prereq"
 	"github.com/richardwilkes/toolbox/v2/i18n"
-	"github.com/richardwilkes/toolbox/v2/xbytes"
 	"github.com/richardwilkes/toolbox/v2/xhash"
 	"github.com/richardwilkes/toolbox/v2/xreflect"
 )
@@ -138,109 +137,6 @@ func (p *PrereqList) AppliesWithParentsAt(entity *Entity) bool {
 		}
 	}
 	return true
-}
-
-// Evaluate checks this list against the entity for the item given as exclude, returning its result. A list is skipped,
-// along with everything in it, when it does not apply at the sheet's tech level, and is also skipped when it has
-// nothing in it that isn't skipped. Its parent leaves it out. Of the rest, one unmet item makes an "all of" list unmet,
-// and one met item makes an "any of" list met, even when others failed. Otherwise the list has failed when any of the
-// rest has, and is met or unmet as they all are. visit, if not nil, is called with the result of each prerequisite in
-// the list and then of the list itself, along with the reason a script gives, which is the error when it couldn't run.
-// Each script runs at most once, and none in a skipped list does. Without an entity, the list is met and nothing is
-// visited.
-func (p *PrereqList) Evaluate(entity *Entity, exclude any, visit func(one Prereq, result CheckResult, reason string)) CheckResult {
-	result, _ := p.evaluate(&prereqEvaluation{entity: entity, exclude: exclude, visit: visit}, nil, nil, p.All)
-	return result
-}
-
-// Satisfied implements Prereq. A list is satisfied when Evaluate finds it met or skipped. hasEquipmentPenalty, if not
-// nil, is set to true when this list is unsatisfied and an unmet equipped-equipment prerequisite is among what made it
-// so: one of its own, or one reached through nested lists that are each unsatisfied. An "all of" list that also fails
-// for some other prerequisite sets it, while an unmet equipment prerequisite inside a satisfied or skipped nested list
-// never does.
-//
-// The text written to buffer lists what is unmet. A skipped list writes nothing, a list with a single unmet item
-// writes just that item, and a nested list with the same mode as its parent writes its items alongside its parent's.
-// Any other list writes a heading with its items indented beneath it. This list is treated as though its caller were
-// an "all of" list, so the items of an "all of" list are written without a heading.
-func (p *PrereqList) Satisfied(entity *Entity, exclude any, buffer *xbytes.InsertBuffer, prefix string, hasEquipmentPenalty *bool) bool {
-	result, _ := p.evaluate(&prereqEvaluation{entity: entity, exclude: exclude, prefix: prefix}, buffer,
-		hasEquipmentPenalty, p.All)
-	return result == CheckMet || result == CheckSkipped
-}
-
-// prereqEvaluation holds what stays the same throughout an evaluation of a prerequisite list.
-type prereqEvaluation struct {
-	entity  *Entity
-	exclude any
-	visit   func(one Prereq, result CheckResult, reason string)
-	prefix  string
-}
-
-// evaluate is Evaluate, also writing the text and setting the equipment penalty that Satisfied describes, and returning
-// how many items of text it wrote at the level of the prefix. flatten requests that the unmet items be written at that
-// level rather than under a heading.
-func (p *PrereqList) evaluate(ev *prereqEvaluation, buffer *xbytes.InsertBuffer, hasEquipmentPenalty *bool, flatten bool) (result CheckResult, items int) {
-	if ev.entity == nil {
-		return CheckMet, 0
-	}
-	if !p.AppliesAt(ev.entity) {
-		p.visitSkipped(ev.visit)
-		return CheckSkipped, 0
-	}
-	var tally checkTally
-	var local *xbytes.InsertBuffer
-	if buffer != nil {
-		local = &xbytes.InsertBuffer{}
-	}
-	eqpPenalty := false
-	for _, one := range p.Prereqs {
-		childResult := CheckMet
-		if list, ok := one.(*PrereqList); ok {
-			var n int
-			childResult, n = list.evaluate(ev, local, &eqpPenalty, list.All == p.All)
-			items += n
-		} else {
-			var reason string
-			if script, isScript := one.(*ScriptPrereq); isScript {
-				childResult, reason = script.evaluate(ev.entity, ev.exclude, local, ev.prefix)
-			} else if !one.Satisfied(ev.entity, ev.exclude, local, ev.prefix, &eqpPenalty) {
-				childResult = CheckUnmet
-			}
-			if childResult != CheckMet {
-				items++
-			}
-			if ev.visit != nil {
-				ev.visit(one, childResult, reason)
-			}
-		}
-		tally.add(childResult)
-	}
-	result = tally.combine(p.All)
-	if ev.visit != nil {
-		ev.visit(p, result, "")
-	}
-	if result == CheckMet || result == CheckSkipped {
-		return result, 0
-	}
-	if eqpPenalty && hasEquipmentPenalty != nil {
-		*hasEquipmentPenalty = true
-	}
-	if buffer == nil {
-		return result, 0
-	}
-	if flatten || items == 1 {
-		buffer.WriteString(local.String())
-		return result, items
-	}
-	buffer.WriteString(ev.prefix)
-	if p.All {
-		buffer.WriteString(i18n.Text("Requires all of:"))
-	} else {
-		buffer.WriteString(i18n.Text("Requires at least one of:"))
-	}
-	buffer.WriteString(strings.ReplaceAll(local.String(), "\n", "\n\t"))
-	return result, 1
 }
 
 // visitSkipped calls visit, if not nil, with each prerequisite in this list and then the list itself as skipped.

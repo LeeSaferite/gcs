@@ -22,7 +22,6 @@ import (
 	"github.com/richardwilkes/toolbox/v2/errs"
 	"github.com/richardwilkes/toolbox/v2/geom"
 	"github.com/richardwilkes/toolbox/v2/i18n"
-	"github.com/richardwilkes/toolbox/v2/xbytes"
 	"github.com/richardwilkes/toolbox/v2/xhash"
 	"github.com/richardwilkes/toolbox/v2/xstrings"
 	"github.com/richardwilkes/unison"
@@ -277,10 +276,11 @@ func (p *prereqPanel) status(node gurps.Prereq, checks map[gurps.Prereq]prereqCh
 			i18n.Text("doesn't apply at this tech level")
 	default:
 	}
-	var buffer xbytes.InsertBuffer
-	gurps.SuppressScriptResolveErrorLogging(func() { node.Satisfied(p.entity, p.exclude(), &buffer, "\n- ", nil) })
+	var reason string
+	gurps.SuppressScriptResolveErrorLogging(func() {
+		reason = gurps.UnsatisfiedPrereqText(node, p.entity, p.exclude(), "\n- ")
+	})
 	// One unmet item reads as a sentence; more are a list.
-	reason := buffer.String()
 	if strings.Count(reason, "\n") == 1 {
 		tip = i18n.Text("Not met: %s", strings.TrimPrefix(reason, "\n- "))
 	} else {

@@ -11,7 +11,6 @@ package gurps
 
 import (
 	"hash"
-	"strings"
 
 	"github.com/richardwilkes/gcs/v5/model/criteria"
 	"github.com/richardwilkes/gcs/v5/model/fxp"
@@ -19,7 +18,6 @@ import (
 	"github.com/richardwilkes/gcs/v5/model/gurps/enums/spellcmp"
 	"github.com/richardwilkes/gcs/v5/model/nameable"
 	"github.com/richardwilkes/toolbox/v2/i18n"
-	"github.com/richardwilkes/toolbox/v2/xbytes"
 	"github.com/richardwilkes/toolbox/v2/xhash"
 )
 
@@ -83,106 +81,8 @@ func (p *SpellPrereq) FillWithNameableKeys(m, existing map[string]string) {
 	}
 }
 
-// powerSourceMatches returns true if a candidate spell's power source passes this prerequisite's filter. For the "same
-// as this spell" form, ownerPowerSource is the owning spell's resolved power source; nil (the prerequisite does not
-// belong to a spell) matches nothing.
-func (p *SpellPrereq) powerSourceMatches(replacements map[string]string, candidate string,
-	ownerPowerSource *string,
-) bool {
-	if p.SamePowerSource {
-		return ownerPowerSource != nil && strings.EqualFold(candidate, *ownerPowerSource)
-	}
-	return p.PowerSourceCriteria.Matches(replacements, candidate)
-}
-
 func (p *SpellPrereq) hasPowerSourceFilter() bool {
 	return p.SamePowerSource || p.PowerSourceCriteria.Compare != criteria.AnyText
-}
-
-// Satisfied implements Prereq.
-func (p *SpellPrereq) Satisfied(entity *Entity, exclude any, tooltip *xbytes.InsertBuffer, prefix string, _ *bool) bool {
-	if entity == nil {
-		return true
-	}
-	var replacements map[string]string
-	if na, ok := exclude.(nameable.Accesser); ok {
-		replacements = na.NameableReplacements()
-	}
-	var techLevel *string
-	var ownerName string
-	var ownerPowerSource *string
-	excludeSpell, isSpell := exclude.(*Spell)
-	if isSpell {
-		techLevel = excludeSpell.TechLevel
-		// Resolve the owning spell's name and power source once rather than once per candidate spell, since a nameable
-		// marker in either would otherwise be re-applied for every spell on the sheet.
-		ownerName = excludeSpell.NameWithReplacements()
-		resolved := excludeSpell.PowerSourceWithReplacements()
-		ownerPowerSource = &resolved
-	}
-	filterPowerSource := p.hasPowerSourceFilter()
-	count := 0
-	colleges := make(map[string]bool)
-	Traverse(func(sp *Spell) bool {
-		if exclude == sp || sp.AdjustedPoints(nil) == 0 {
-			return false
-		}
-		// Don't count a spell that, in turn, directly requires the spell being checked, since doing so would create a
-		// circular prerequisite relationship (see GitHub issue #737).
-		if excludeSpell != nil && spellDirectlyRequiresNamed(sp, ownerName, *ownerPowerSource) {
-			return false
-		}
-		if techLevel != nil && sp.TechLevel != nil && *techLevel != *sp.TechLevel {
-			return false
-		}
-		if filterPowerSource && !p.powerSourceMatches(replacements, sp.PowerSourceWithReplacements(), ownerPowerSource) {
-			return false
-		}
-		switch p.SubType {
-		case spellcmp.Name:
-			if p.QualifierCriteria.Matches(replacements, sp.NameWithReplacements()) {
-				count++
-			}
-		case spellcmp.Tag:
-			for _, one := range sp.Tags {
-				if p.QualifierCriteria.Matches(replacements, one) {
-					count++
-					break
-				}
-			}
-		case spellcmp.College:
-			for _, one := range sp.CollegeWithReplacements() {
-				if p.QualifierCriteria.Matches(replacements, one) {
-					count++
-					break
-				}
-			}
-		case spellcmp.CollegeCount:
-			for _, one := range sp.CollegeWithReplacements() {
-				colleges[one] = true
-			}
-		case spellcmp.Any:
-			count++
-		}
-		return false
-	}, false, true, entity.Spells...)
-	if p.SubType == spellcmp.CollegeCount {
-		count = len(colleges)
-	}
-	satisfied := p.QuantityCriteria.Matches(fxp.FromInteger(count))
-	if !p.Has {
-		satisfied = !satisfied
-	}
-	if !satisfied && tooltip != nil {
-		tooltip.WriteString(prefix)
-		tooltip.WriteString(p.Describe(entity, replacements, plainText))
-		// Name the owning spell's resolved power source, so that one that is blank or spelled differently from the
-		// spells it expects to match can be diagnosed from the tooltip alone.
-		if p.SamePowerSource && ownerPowerSource != nil {
-			tooltip.WriteString(` ("` + *ownerPowerSource + `")`)
-		}
-	}
-	return satisfied
 }
 
 // Describe implements Prereq.
@@ -231,53 +131,6 @@ func (p *SpellPrereq) Describe(_ *Entity, replacements map[string]string, em fun
 		}
 	}
 	return text
-}
-
-// spellDirectlyRequires returns true if the candidate spell directly lists a spell-by-name prerequisite that matches
-// the target spell. It keeps a spell from being counted as a prerequisite for a spell that it, in turn, requires, which
-// would create a circular prerequisite relationship.
-func spellDirectlyRequires(candidate, target *Spell) bool {
-	if candidate == nil || target == nil {
-		return false
-	}
-	return spellDirectlyRequiresNamed(candidate, target.NameWithReplacements(), target.PowerSourceWithReplacements())
-}
-
-// spellDirectlyRequiresNamed is spellDirectlyRequires with the target spell's name and power source already resolved,
-// for callers that check many candidates against the same target.
-func spellDirectlyRequiresNamed(candidate *Spell, targetName, targetPowerSource string) bool {
-	if candidate == nil || candidate.Prereq == nil {
-		return false
-	}
-	candidatePowerSource := candidate.PowerSourceWithReplacements()
-	return prereqListRequiresSpell(candidate.Prereq, candidate.NameableReplacements(), &candidatePowerSource, targetName,
-		targetPowerSource)
-}
-
-// prereqListRequiresSpell returns true if the given prereq list holds a spell-by-name prerequisite (at any nesting
-// depth) that is required (Has), matches the target spell's name, and whose power source filter, if any, the target
-// spell's power source passes. The replacements and owner power source are those of the spell the prereq list belongs
-// to: its qualifiers resolve against the former, and a "same power source as this spell" filter compares to the latter.
-func prereqListRequiresSpell(list *PrereqList, replacements map[string]string, ownerPowerSource *string, targetName,
-	targetPowerSource string,
-) bool {
-	if list == nil {
-		return false
-	}
-	for _, one := range list.Prereqs {
-		switch p := one.(type) {
-		case *PrereqList:
-			if prereqListRequiresSpell(p, replacements, ownerPowerSource, targetName, targetPowerSource) {
-				return true
-			}
-		case *SpellPrereq:
-			if p.Has && p.SubType == spellcmp.Name && p.QualifierCriteria.Matches(replacements, targetName) &&
-				p.powerSourceMatches(replacements, targetPowerSource, ownerPowerSource) {
-				return true
-			}
-		}
-	}
-	return false
 }
 
 // Hash writes this object's contents into the hasher.

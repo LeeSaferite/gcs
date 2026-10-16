@@ -16,7 +16,6 @@ import (
 	"github.com/richardwilkes/gcs/v5/model/fxp"
 	"github.com/richardwilkes/gcs/v5/model/gurps/enums/prereq"
 	"github.com/richardwilkes/toolbox/v2/i18n"
-	"github.com/richardwilkes/toolbox/v2/xbytes"
 	"github.com/richardwilkes/toolbox/v2/xhash"
 )
 
@@ -64,24 +63,6 @@ func (p *ContainedWeightPrereq) Clone(parent *PrereqList) Prereq {
 
 // FillWithNameableKeys implements Prereq.
 func (p *ContainedWeightPrereq) FillWithNameableKeys(_, _ map[string]string) {
-}
-
-// Satisfied implements Prereq.
-func (p *ContainedWeightPrereq) Satisfied(entity *Entity, exclude any, tooltip *xbytes.InsertBuffer, prefix string, _ *bool) bool {
-	satisfied := false
-	if eqp, ok := exclude.(*Equipment); ok {
-		if satisfied = !eqp.Container(); !satisfied {
-			satisfied = p.WeightCriteria.Matches(eqp.ContainedWeight(false, SheetSettingsFor(entity).DefaultWeightUnits))
-		}
-	}
-	if !p.Has {
-		satisfied = !satisfied
-	}
-	if !satisfied && tooltip != nil {
-		tooltip.WriteString(prefix)
-		tooltip.WriteString(p.Describe(entity, nil, plainText))
-	}
-	return satisfied
 }
 
 // Describe implements Prereq. The weight is given in the default weight units of the entity, which may be nil.

@@ -13,11 +13,9 @@ import (
 	"hash"
 
 	"github.com/richardwilkes/gcs/v5/model/criteria"
-	"github.com/richardwilkes/gcs/v5/model/fxp"
 	"github.com/richardwilkes/gcs/v5/model/gurps/enums/prereq"
 	"github.com/richardwilkes/gcs/v5/model/nameable"
 	"github.com/richardwilkes/toolbox/v2/i18n"
-	"github.com/richardwilkes/toolbox/v2/xbytes"
 	"github.com/richardwilkes/toolbox/v2/xhash"
 )
 
@@ -73,44 +71,6 @@ func (p *TraitPrereq) FillWithNameableKeys(m, existing map[string]string) {
 		p.NameCriteria.Qualifier,
 		p.NotesCriteria.Qualifier,
 	)
-}
-
-// Satisfied implements Prereq.
-func (p *TraitPrereq) Satisfied(entity *Entity, exclude any, tooltip *xbytes.InsertBuffer, prefix string, _ *bool) bool {
-	if entity == nil {
-		return true
-	}
-	var replacements map[string]string
-	if na, ok := exclude.(nameable.Accesser); ok {
-		replacements = na.NameableReplacements()
-	}
-	satisfied := false
-	Traverse(func(t *Trait) bool {
-		if exclude == t || !p.NameCriteria.Matches(replacements, t.NameWithReplacements()) {
-			return false
-		}
-		notes := t.Notes()
-		if modNotes := t.ModifierNotes(); modNotes != "" {
-			notes += "\n" + modNotes
-		}
-		if !p.NotesCriteria.Matches(replacements, notes) {
-			return false
-		}
-		var levels fxp.Int
-		if t.IsLeveled() {
-			levels = t.CurrentLevel()
-		}
-		satisfied = p.LevelCriteria.Matches(levels)
-		return satisfied
-	}, true, false, entity.Traits...)
-	if !p.Has {
-		satisfied = !satisfied
-	}
-	if !satisfied && tooltip != nil {
-		tooltip.WriteString(prefix)
-		tooltip.WriteString(p.Describe(entity, replacements, plainText))
-	}
-	return satisfied
 }
 
 // Describe implements Prereq. A level of "at least 0" or less is left out, since every trait has at least that.

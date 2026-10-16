@@ -9,20 +9,43 @@
 
 package gurps
 
-import "strings"
+import (
+	"context"
+	"sync"
 
-// NewListFilterChecker returns a function that checks a node against the filter, with the fields the filter refers to
-// looked up once rather than for every node. A nil filter, or one without a root, is skipped for every node.
+	"github.com/richardwilkes/gcs/v5/model/condition"
+)
+
+// NewListFilterChecker returns a function that checks a node against the filter. The filter is converted to a condition
+// tree once, here, and the fields it refers to are looked up through the filter host. A nil filter, or one without a
+// root, is skipped for every node.
+//
+// A group is checked as a list of prerequisites is: children that are skipped are left out, and a group with nothing
+// left is skipped. Of the rest, one unmet child makes an "all of" group unmet, and one met child makes an "any of"
+// group met, even when others failed. Otherwise the group has failed when any of the rest has, and is met or unmet as
+// they all are. A condition is met when the node's field satisfies its criteria. A node whose text field is empty or
+// only space, whose list field holds nothing, or that the field's Has says lacks it doesn't have the field, so it
+// satisfies no criteria. Negating a group or condition swaps met and unmet. A condition on an unknown field, and a
+// node kind this version of GCS doesn't understand, fail the whole filter, since its intent can't be known.
 func NewListFilterChecker[T Node[T]](f *ListFilter, fields []*FilterField[T]) func(T) CheckResult {
 	if f == nil || f.Root == nil {
 		return func(T) CheckResult { return CheckSkipped }
 	}
-	byKey := make(map[string]*FilterField[T], len(fields))
-	for _, field := range fields {
-		byKey[field.Key] = field
+	tree, err := conditionFromFilterGroup(f.Root, fields)
+	if err != nil {
+		return func(T) CheckResult { return CheckFailed }
 	}
-	root := f.Root
-	return func(node T) CheckResult { return checkFilterNode(root, byKey, node) }
+	m := condition.NewMatcher(tree, newFilterHost(fields), condition.Options{})
+	var lock sync.Mutex // a Matcher reuses its scratch space between nodes
+	return func(node T) CheckResult {
+		lock.Lock()
+		defer lock.Unlock()
+		state, matchErr := m.State(context.Background(), node)
+		if matchErr != nil {
+			return CheckFailed
+		}
+		return checkResultOf(state)
+	}
 }
 
 // NewListFilterMatcher returns a function that reports whether a node passes the filter: whether NewListFilterChecker
@@ -34,68 +57,4 @@ func NewListFilterMatcher[T Node[T]](f *ListFilter, fields []*FilterField[T]) fu
 		result := check(node)
 		return result == CheckMet || result == CheckSkipped
 	}
-}
-
-// checkFilterNode checks the node against the filter node. A node kind this version of GCS doesn't understand fails,
-// since its intent can't be known.
-func checkFilterNode[T Node[T]](n FilterNode, fields map[string]*FilterField[T], node T) CheckResult {
-	switch one := n.(type) {
-	case *FilterGroup:
-		return checkFilterGroup(one, fields, node)
-	case *FilterCondition:
-		return checkFilterCondition(one, fields, node)
-	default:
-		return CheckFailed
-	}
-}
-
-// checkFilterGroup checks the node against the group, as a list of prerequisites is checked: children that are skipped
-// are left out, and a group with nothing left is skipped. Of the rest, one unmet child makes an "all of" group unmet,
-// and one met child makes an "any of" group met, even when others failed. Otherwise the group has failed when any of
-// the rest has, and is met or unmet as they all are. Negating the group then swaps met and unmet.
-func checkFilterGroup[T Node[T]](g *FilterGroup, fields map[string]*FilterField[T], node T) CheckResult {
-	var tally checkTally
-	for _, child := range g.Children {
-		tally.add(checkFilterNode(child, fields, node))
-	}
-	return tally.combine(g.All).negate(g.Not)
-}
-
-// checkFilterCondition checks the node's field against the condition's criteria, swapping met and unmet when the
-// condition is negated. A node whose text field is empty or only space, whose list field holds nothing, or that the
-// field's Has says lacks it, such as a trait that can't be leveled, doesn't have the field, as the condition's title
-// puts it, so it satisfies no criteria. A condition on a field this version of GCS doesn't know fails, for the same
-// reason an unknown node does.
-func checkFilterCondition[T Node[T]](c *FilterCondition, fields map[string]*FilterField[T], node T) CheckResult {
-	field, ok := fields[c.Field]
-	if !ok {
-		return CheckFailed
-	}
-	var met bool
-	if field.Has != nil && !field.Has(node) {
-		return CheckUnmet.negate(c.Not)
-	}
-	switch field.Kind {
-	case FilterFieldText:
-		if value := field.Text(node); strings.TrimSpace(value) != "" {
-			met = c.Text.Matches(nil, value)
-		}
-	case FilterFieldList:
-		if values := field.List(node); len(values) != 0 {
-			met = c.Text.MatchesList(nil, values...)
-		}
-	case FilterFieldNumber:
-		met = c.Number.Matches(field.Number(node))
-	case FilterFieldWeight:
-		met = c.Weight.Matches(field.Weight(node))
-	case FilterFieldBool:
-		met = field.Bool(node)
-	default:
-		return CheckFailed
-	}
-	result := CheckUnmet
-	if met {
-		result = CheckMet
-	}
-	return result.negate(c.Not)
 }

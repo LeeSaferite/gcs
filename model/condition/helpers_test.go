@@ -160,6 +160,11 @@ func listValue(list ...string) Value {
 	return Value{Kind: ValueList, List: list}
 }
 
+// wholeValue returns a List of free text, whose elements are compared with the whole qualifier.
+func wholeValue(list ...string) Value {
+	return Value{Kind: ValueList, List: list, Whole: true}
+}
+
 func numberValue(n int64) Value {
 	return Value{Kind: ValueNumber, Number: fxp.FromInteger(n)}
 }

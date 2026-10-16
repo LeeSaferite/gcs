@@ -451,15 +451,16 @@ func TestEquipmentPenaltyThroughNegation(t *testing.T) {
 		{"none of none of not having the shield", noneOf(noneOf(equipped("Shield", true))), false, false},
 		{"none of not having the shield", noneOf(equipped("Shield", true)), true, false},
 		{"none of not having a kit carried", noneOf(carried("Kit", true)), false, false},
+		// A prerequisite this version doesn't know fails the whole list, so nothing in it earns the penalty.
 		{
 			"none of a failed all of not having a longarm",
 			noneOf(allOf(equipped("Longarm", true), gurps.NewUnknownPrereq("future", []byte(`{"type":"future"}`)))),
-			false, true,
+			false, false,
 		},
 		{
 			"any of having a longarm and a failure",
 			anyOf(equipped("Longarm", false), gurps.NewUnknownPrereq("future", []byte(`{"type":"future"}`))),
-			false, true,
+			false, false,
 		},
 	} {
 		root := gurps.NewPrereqList()

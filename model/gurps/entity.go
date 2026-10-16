@@ -919,13 +919,14 @@ func (e *Entity) applyEquipmentPenalties() {
 // pass. A technique or ritual magic spell whose prerequisites are met must also have the skill it is based on. A
 // disabled one is not judged, and has any reason recorded before it was disabled cleared.
 func (e *Entity) processSkillAndSpellPrereqs() {
+	h := newConditionHost(e)
 	Traverse(func(s *Skill) bool {
 		if s.Container() || !s.Enabled() {
 			s.UnsatisfiedReason = ""
 			s.takesEquipmentPenalty = false
 			return false
 		}
-		s.UnsatisfiedReason = e.evaluatePrereqs(s.Prereq, s, &s.takesEquipmentPenalty)
+		s.UnsatisfiedReason = e.evaluatePrereqs(h, s.Prereq, s, &s.takesEquipmentPenalty)
 		if s.UnsatisfiedReason == "" && s.IsTechnique() {
 			s.UnsatisfiedReason = unsatisfiedReason(func(tooltip *xbytes.InsertBuffer) bool {
 				return s.TechniqueSatisfied(tooltip, unsatisfiedReasonPrefix)
@@ -939,7 +940,7 @@ func (e *Entity) processSkillAndSpellPrereqs() {
 			s.takesEquipmentPenalty = false
 			return false
 		}
-		s.UnsatisfiedReason = e.evaluatePrereqs(s.Prereq, s, &s.takesEquipmentPenalty)
+		s.UnsatisfiedReason = e.evaluatePrereqs(h, s.Prereq, s, &s.takesEquipmentPenalty)
 		if s.UnsatisfiedReason == "" && s.IsRitualMagic() {
 			s.UnsatisfiedReason = unsatisfiedReason(func(tooltip *xbytes.InsertBuffer) bool {
 				return s.RitualMagicSatisfied(tooltip, unsatisfiedReasonPrefix)
@@ -952,9 +953,10 @@ func (e *Entity) processSkillAndSpellPrereqs() {
 // processEquipmentPrereqs evaluates the prerequisites of every piece of equipment, recording the reason each is
 // unsatisfied. A disabled one is not judged, and has any reason recorded before it was disabled cleared.
 func (e *Entity) processEquipmentPrereqs() {
+	h := newConditionHost(e)
 	equipmentFunc := func(eqp *Equipment) bool {
 		if eqp.Enabled() {
-			eqp.UnsatisfiedReason = e.evaluatePrereqs(eqp.Prereq, eqp, nil)
+			eqp.UnsatisfiedReason = e.evaluatePrereqs(h, eqp.Prereq, eqp, nil)
 		} else {
 			eqp.UnsatisfiedReason = ""
 		}
@@ -978,11 +980,12 @@ func (e *Entity) processTraitPrereqs() {
 	// reason is kept for a trait disabled this way, so the sheet can show why it is disabled.
 	enforce := e.SheetSettings.EnforceTraitPrereqs
 	var verdicts []traitPrereqVerdict
+	h := newConditionHost(e)
 	Traverse(func(t *Trait) bool {
 		t.UnsatisfiedReason = ""
 		verdict := prereqsNotJudged
 		if !t.IsDisabled() && (t.parent == nil || t.parent.Enabled()) {
-			t.UnsatisfiedReason = e.evaluatePrereqs(t.Prereq, t, nil)
+			t.UnsatisfiedReason = e.evaluatePrereqs(h, t.Prereq, t, nil)
 			if maximum := t.ResolvedMaxLevels(); maximum > 0 && t.Levels > maximum {
 				reason := levelExceedsMaximumReason(maximum)
 				if t.UnsatisfiedReason == "" {
@@ -1011,16 +1014,16 @@ func levelExceedsMaximumReason(maximum fxp.Int) string {
 	return i18n.Text("Level exceeds the maximum of ") + maximum.String()
 }
 
-// evaluatePrereqs evaluates the prerequisites, which may be nil, of the node given as exclude and returns the reason to
-// record when they are not met, or "" when they are. hasEquipmentPenalty, if non-nil, is set to whether they are unmet
-// on account of equipment they require to be equipped, which is what earns a skill or spell the missing-equipment
-// penalty.
-func (e *Entity) evaluatePrereqs(prereq *PrereqList, exclude any, hasEquipmentPenalty *bool) string {
+// evaluatePrereqs evaluates the prerequisites, which may be nil, of the node given as exclude with the host, which the
+// lists of one pass share, and returns the reason to record when they are not met, or "" when they are.
+// hasEquipmentPenalty, if non-nil, is set to whether they are unmet on account of equipment they require to be
+// equipped, which is what earns a skill or spell the missing-equipment penalty.
+func (e *Entity) evaluatePrereqs(h *conditionHost, prereq *PrereqList, exclude any, hasEquipmentPenalty *bool) string {
 	if hasEquipmentPenalty != nil {
 		*hasEquipmentPenalty = false
 	}
 	return unsatisfiedReason(func(tooltip *xbytes.InsertBuffer) bool {
-		return prereq == nil || prereq.Satisfied(e, exclude, tooltip, unsatisfiedReasonPrefix, hasEquipmentPenalty)
+		return prereq == nil || prereqsSatisfied(prereq, h, exclude, tooltip, unsatisfiedReasonPrefix, hasEquipmentPenalty)
 	})
 }
 

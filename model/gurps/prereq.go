@@ -17,7 +17,6 @@ import (
 	"github.com/richardwilkes/gcs/v5/model/gurps/enums/prereq"
 	"github.com/richardwilkes/gcs/v5/model/nameable"
 	"github.com/richardwilkes/toolbox/v2/i18n"
-	"github.com/richardwilkes/toolbox/v2/xbytes"
 )
 
 // Prereq holds data necessary to track a prerequisite.
@@ -30,11 +29,6 @@ type Prereq interface {
 	SetParentList(list *PrereqList)
 	// Clone creates a new copy of this Prereq.
 	Clone(parent *PrereqList) Prereq
-	// Satisfied returns true if this Prereq is satisfied by the specified Entity. 'buffer', if not nil, receives a
-	// description of what was unsatisfied, with 'prefix' written before each line. 'hasEquipmentPenalty', if not nil,
-	// is only ever set to true, by an unmet prerequisite to have equipment equipped and by an unsatisfied list one
-	// contributed to (see PrereqList.Satisfied); that is what earns a skill or spell the missing-equipment penalty.
-	Satisfied(entity *Entity, exclude any, buffer *xbytes.InsertBuffer, prefix string, hasEquipmentPenalty *bool) bool
 	// Describe returns a plain-language description of what this Prereq requires, whether or not it is met, naming
 	// attributes and giving weights as the entity, which may be nil, defines them. Names and qualifiers are passed
 	// through em, which may wrap them for emphasis; pass an identity func for plain text.

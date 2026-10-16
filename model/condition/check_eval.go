@@ -166,7 +166,11 @@ func (e *evaluator) matchText(c *Check, v Value, f frame) (bool, *outcome) {
 	if strings.IndexByte(c.Text.Qualifier, byte(nameable.MarkerDelimiter)) >= 0 {
 		repl = e.replacementsFor(f)
 	}
-	if v.Kind == ValueList {
+	switch {
+	case v.Kind != ValueList:
+	case v.Whole:
+		return c.Text.MatchesEach(repl, v.List...), nil
+	default:
 		return c.Text.MatchesList(repl, v.List...), nil
 	}
 	return c.Text.Matches(repl, v.Text), nil

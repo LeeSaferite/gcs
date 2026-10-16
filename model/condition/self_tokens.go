@@ -104,13 +104,13 @@ func (e *evaluator) selfQualifier(c *Check) *selfQualifier {
 }
 
 // matchTokens matches a value against a qualifier holding self tokens: replacements apply to the literal runs, a List
-// value splits the qualifier on commas, token values are substituted verbatim (a List token value giving one
-// alternative per element), and the alternatives are then matched with no further replacements.
+// value that isn't Whole splits the qualifier on commas, token values are substituted verbatim (a List token value
+// giving one alternative per element), and the alternatives are then matched with no further replacements.
 func (e *evaluator) matchTokens(c *Check, sq *selfQualifier, v Value, f frame) (bool, *outcome) {
 	repl := e.replacementsFor(f)
 	var pieces [][]string
 	total := 0
-	for _, piece := range splitPieces(sq.parts, repl, v.Kind == ValueList) {
+	for _, piece := range splitPieces(sq.parts, repl, v.Kind == ValueList && !v.Whole) {
 		alts := []string{""}
 		for _, part := range piece {
 			values := []string{part.text}

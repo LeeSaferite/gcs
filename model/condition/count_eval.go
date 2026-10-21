@@ -22,7 +22,9 @@ import (
 // eachMember calls fn, in collection order, for each member of m's collection whose where passes, with the where's
 // result, until fn returns false. Self is left out unless m includes it. A collection the host doesn't have, a where
 // that ends Failed, and running out of budget all return the Failed result to report. The where's result is only
-// passed in Collect mode, through one copy per call, so that YesNo allocates nothing per member.
+// passed in Collect mode, through one copy per call, so that YesNo allocates nothing per member. Collect mode decides
+// each where first as YesNo does, and collects the details only for a member that passes or fails, since the others
+// leave nothing in the result.
 func (e *evaluator) eachMember(m *Members, f frame, fn func(item Item, where *Result) bool) *Result {
 	items, ok := e.host.Collection(m.Of, e.self, f.subject)
 	if !ok {
@@ -42,12 +44,10 @@ func (e *evaluator) eachMember(m *Members, f frame, fn func(item Item, where *Re
 			return &r
 		}
 		mf := frame{subject: item, of: &m.Of}
-		var o outcome
-		if where != nil {
+		o := e.testRef(m.Where, mf)
+		if where != nil && o.state != Unmet {
 			*where = e.evalRef(m.Where, mf)
 			o = outcome{reason: where.Reason, state: where.State}
-		} else {
-			o = e.testRef(m.Where, mf)
 		}
 		switch {
 		case o.state.Passes():

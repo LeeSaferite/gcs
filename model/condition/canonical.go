@@ -49,22 +49,37 @@ func canonicalWeight(w criteria.Weight) criteria.Weight {
 	return w
 }
 
-// canonicalQuantity returns the canonical form of a Count quantity or per-group: nil for nil and for "at least 1",
-// which is what nil means, otherwise a criterion with no stale qualifier.
+// canonicalQuantity returns the canonical form of a quantity of a Count or count Group: nil for nil and for "at least
+// 1", which is what nil means, since a count with no quantity asks whether anything passes, unlike a criterion, whose
+// zero value means "any"; "at least 0" for "any", which every number passes; otherwise a copy.
 func canonicalQuantity(p *criteria.Number) *criteria.Number {
-	if p == nil || (p.Compare == criteria.AtLeastNumber && p.Qualifier == fxp.One) {
+	switch {
+	case p == nil || (p.Compare == criteria.AtLeastNumber && p.Qualifier == fxp.One):
 		return nil
+	case p.Compare == criteria.AnyNumber:
+		return &criteria.Number{Compare: criteria.AtLeastNumber}
+	default:
+		n := *p
+		return &n
 	}
-	n := canonicalNumber(*p)
-	return &n
 }
 
-// hashQuantity writes the canonical form of a Count quantity or per-group into the hasher. criteria.Number's Hash
-// already ignores the qualifier of "any", so only "at least 1" needs mapping to nil.
+// quantityKnown returns true for a quantity that is nil or has a known comparison.
+func quantityKnown(p *criteria.Number) bool {
+	return p == nil || p.Compare == p.Compare.EnsureValid()
+}
+
+// vacuous returns true for a quantity that every number of members passes.
+func vacuous(p *criteria.Number) bool {
+	q := canonicalQuantity(p)
+	return q != nil && q.Compare == criteria.AtLeastNumber && q.Qualifier <= 0
+}
+
+// hashQuantity writes the canonical form of a quantity into the hasher.
 func hashQuantity(h hash.Hash, p *criteria.Number) {
-	present := p != nil && (p.Compare != criteria.AtLeastNumber || p.Qualifier != fxp.One)
-	xhash.Bool(h, present)
-	if present {
-		p.Hash(h)
+	q := canonicalQuantity(p)
+	xhash.Bool(h, q != nil)
+	if q != nil {
+		q.Hash(h)
 	}
 }

@@ -33,7 +33,8 @@ func (r Ref) MarshalJSONTo(enc *jsontext.Encoder) error {
 }
 
 // UnmarshalJSONFrom implements json.UnmarshalerFrom. A tree that can't be decoded doesn't fail the file holding it:
-// the Ref is broken instead, keeping the bytes as read and the error, which Err returns.
+// the Ref is broken instead, keeping the bytes as read, compacted so that how deeply the file indented them doesn't
+// change the hash, and the error, which Err returns.
 func (r *Ref) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
 	raw, err := dec.ReadValue()
 	if err != nil {
@@ -41,7 +42,11 @@ func (r *Ref) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
 	}
 	var n Node
 	if n, err = decodeRef(raw, 1); err != nil {
-		n = &broken{data: slices.Clone(raw), err: err}
+		data := slices.Clone(raw)
+		if data.Compact() != nil {
+			data = slices.Clone(raw)
+		}
+		n = &broken{data: data, err: err}
 	}
 	r.Node = n
 	return nil

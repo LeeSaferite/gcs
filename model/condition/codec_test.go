@@ -35,6 +35,7 @@ func TestDecodeRoundTrip(t *testing.T) {
 		{"whitespace", ` { "type" : "const" , "value" : true } `, `{"type":"const","value":true}`},
 		{"check", `{"type":"check","field":"hidden"}`, ""},
 		{"check text", `{"type":"check","field":"tags","not":true,"text":{"compare":"contains","qualifier":"@Weapon@"}}`, ""},
+		{"check null criterion", `{"type":"check","field":"tags","text":null}`, `{"type":"check","field":"tags"}`},
 		{"check number", `{"type":"check","field":"level","number":{"compare":"at_least","qualifier":2.5}}`, ""},
 		{
 			"check weight", `{"type":"check","field":"weight","weight":{"compare":"at_most","qualifier":"10.79 lb"}}`,
@@ -46,7 +47,7 @@ func TestDecodeRoundTrip(t *testing.T) {
 		},
 		{
 			"group",
-			`{"type":"group","mode":"at_least","n":2,"not":true,"only_when":{"type":"const","value":true},"children":[{"type":"const","value":true},{"type":"script","script":"x"},{"type":"group","mode":"any"}]}`,
+			`{"type":"group","mode":"count","quantity":{"compare":"at_most","qualifier":2},"not":true,"only_when":{"type":"const","value":true},"children":[{"type":"const","value":true},{"type":"script","script":"x"},{"type":"group","mode":"any"}]}`,
 			"",
 		},
 		{
@@ -64,7 +65,13 @@ func TestDecodeRoundTrip(t *testing.T) {
 			"count at least 1", `{"type":"count","of":"spells","quantity":{"compare":"at_least","qualifier":1},"per_group":{"compare":"at_least","qualifier":1},"group_by":"college"}`,
 			`{"type":"count","of":"spells","group_by":"college"}`,
 		},
-		{"count any", `{"type":"count","of":"spells","quantity":{}}`, ""},
+		{
+			"childless count group", `{"type":"group","mode":"count","quantity":{"compare":"at_most","qualifier":0}}`,
+			`{"type":"group","mode":"count","quantity":{"compare":"at_most"}}`,
+		},
+		{"count any", `{"type":"count","of":"spells","quantity":{}}`, `{"type":"count","of":"spells","quantity":{"compare":"at_least"}}`},
+		{"count at least 0", `{"type":"count","of":"spells","quantity":{"compare":"at_least","qualifier":0}}`, `{"type":"count","of":"spells","quantity":{"compare":"at_least"}}`},
+		{"group count at least 1", `{"type":"group","mode":"count","quantity":{"compare":"at_least","qualifier":1},"children":[{"type":"const","value":true}]}`, `{"type":"group","mode":"count","children":[{"type":"const","value":true}]}`},
 		{
 			"compare",
 			`{"type":"compare","left":{"aggregate":"sum","of":"traits","include_self":true,"where":{"type":"check","field":"name"},"field":"level","scale":0,"offset":-1},"op":"at_most","right":{"sum":[{"attribute":"iq"},{"entity":"tech_level"},{"value":0},{"self":"level"}]}}`,
@@ -167,8 +174,8 @@ func TestDecodeErrors(t *testing.T) {
 			`left: unknown member "aggr"`,
 		},
 		{
-			"unknown aggregate", `{"type":"compare","left":{"value":1},"op":"is","right":{"aggregate":"min","of":"x","field":"y"}}`,
-			`right: unknown "aggregate" value "min"`,
+			"unknown aggregate", `{"type":"compare","left":{"value":1},"op":"is","right":{"aggregate":"median","of":"x","field":"y"}}`,
+			`right: unknown "aggregate" value "median"`,
 		},
 		{
 			"operand where", `{"type":"compare","left":{"aggregate":"count","of":"x","where":{"type":"x"}},"op":"is","right":{"value":2}}`,
@@ -236,14 +243,20 @@ func TestBrokenRef(t *testing.T) {
 	c.NotNil(json.Unmarshal([]byte(`{"tree":`), &holder))
 }
 
-// TestEncodeErrors checks that a mode or operator outside its enum, which only code can build, fails to encode
-// rather than being written as something else.
+// TestEncodeErrors checks that a mode, operator, comparison or aggregate outside its enum, which only code can build,
+// fails to encode rather than being written as something else.
 func TestEncodeErrors(t *testing.T) {
 	c := check.New(t)
 	for _, n := range []Node{
 		&Group{Mode: LastGroupMode + 1},
 		&Compare{Left: value(1), Op: LastCompareOp + 1, Right: value(1)},
 		&Group{Children: Nodes{&Group{Mode: LastGroupMode + 1}}},
+		&Group{Mode: GroupCount, Quantity: numberCritPtr(99, 1)},
+		&Check{Field: "f", Text: textCrit(99, "a")},
+		&Check{Field: "f", Weight: weightCrit(99, 1)},
+		&Count{Of: "x", Quantity: numberCritPtr(99, 1)},
+		&Count{Of: "x", GroupBy: "y", PerGroup: numberCritPtr(99, 1)},
+		&Compare{Left: Operand{Aggregate: 77, Members: Members{Of: "x"}}, Op: OpIs, Right: value(1)},
 	} {
 		_, err := json.Marshal(n)
 		c.NotNil(err)
@@ -265,5 +278,74 @@ func TestCanonicalEquivalents(t *testing.T) {
 		c.Equal(nodeHash(pair[0]), nodeHash(pair[1]))
 	}
 	c.Equal(nodeHash(nil), hashWith(Ref{Node: &Group{}}.hash))
+	c.Equal(nodeHash(nil), nodeHash(&Group{Mode: GroupAny, Not: true}))
 	c.NotEqual(nodeHash(&Count{Of: "x"}), nodeHash(&Count{Of: "x", Quantity: &criteria.Number{}}))
+	for _, pair := range [][2]Node{
+		{&Count{Of: "x", Quantity: &criteria.Number{}}, &Count{Of: "x", Quantity: atLeast(0)}},
+		{&Group{Mode: GroupCount, Children: Nodes{&Const{}}}, &Group{Mode: GroupCount, Quantity: atLeast(1), Children: Nodes{&Const{}}}},
+		{&Count{Of: "x", PerGroup: atLeast(1)}, &Count{Of: "x"}},
+	} {
+		c.Equal(encode(t, pair[0]), encode(t, pair[1]))
+		c.Equal(nodeHash(pair[0]), nodeHash(pair[1]))
+		c.Equal(len(Validate(pair[0])), len(Validate(pair[1])))
+	}
+}
+
+// TestChildlessGroups checks that only a group that evaluates like nil is treated as nil in a slot, so that a
+// childless group with a problem is still reported and written, rather than dropped.
+func TestChildlessGroups(t *testing.T) {
+	c := check.New(t)
+	for _, g := range []*Group{
+		{Mode: GroupCount, Quantity: numberCritPtr(criteria.AtMostNumber, 0)},
+		{Mode: GroupAny, Exclusive: true},
+	} {
+		c.False(Ref{Node: g}.IsZero())
+		out := encode(t, Ref{Node: g})
+		c.NotEqual("null", out)
+		c.Equal(out, encode(t, Ref{Node: decode(t, out)}))
+	}
+	guarded := &Group{OnlyWhen: Ref{Node: &Group{Mode: GroupAny, Exclusive: true}}, Children: Nodes{&Const{}}}
+	c.Equal([]Problem{{Path: Path{{Kind: SlotOnlyWhen}}, Msg: `an exclusive group's mode is not "all"`}}, Validate(guarded))
+	_, err := json.Marshal(Ref{Node: &Group{Mode: LastGroupMode + 1}})
+	c.NotNil(err)
+}
+
+// TestBrokenRefIndentation checks that the hash of a broken tree doesn't depend on how the file holding it was
+// indented.
+func TestBrokenRefIndentation(t *testing.T) {
+	c := check.New(t)
+	var flat, indented Ref
+	c.NoError(json.Unmarshal([]byte(`{"type":"nope","x":[1,{"a":2}]}`), &flat))
+	c.NoError(json.Unmarshal([]byte("{\n\t\t\"type\": \"nope\",\n\t\t\"x\": [ 1, { \"a\": 2 } ]\n\t}"), &indented))
+	c.NotNil(indented.Err())
+	c.Equal(nodeHash(flat.Node), nodeHash(indented.Node))
+}
+
+// TestUnmarshalNode checks that a node or operand read directly, rather than through a Ref or Decode, is read as
+// strictly as one in a tree.
+func TestUnmarshalNode(t *testing.T) {
+	c := check.New(t)
+	var count Count
+	c.NoError(json.Unmarshal([]byte(`{"type":"count","of":"x","quantity":{"compare":"at_most","qualifier":3}}`), &count))
+	c.Equal(&Count{Of: "x", Quantity: numberCritPtr(criteria.AtMostNumber, 3)}, &count)
+	for _, tc := range []struct {
+		in   string
+		node any
+		want string
+	}{
+		{`{"type":"count","of":"x","quantity":{"compare":"around","qualifier":3}}`, &Count{}, `unknown "quantity.compare" value "around"`},
+		{`{"type":"count","of":"x","bogus":1}`, &Count{}, `unknown member "bogus"`},
+		{`{"type":"check","field":"x"}`, &Count{}, "a node of another type"},
+		{`{"type":"group","mode":"any","children":[{"type":"x"}]}`, &Group{}, `children[0]: unknown node type "x"`},
+		{`{"type":"check","field":"x","text":{"compare":"bogus"}}`, &Check{}, `unknown "text.compare" value "bogus"`},
+		{`{"type":"const","value":1}`, &Const{}, `invalid value for "value"`},
+		{`{"type":"script","script":"x","lang":7}`, &Script{}, `invalid value for "lang"`},
+		{`{"type":"compare","left":{"value":1},"right":{"value":1}}`, &Compare{}, `missing "op"`},
+		{`{"aggregate":"median","of":"x"}`, &Operand{}, `unknown "aggregate" value "median"`},
+	} {
+		err := json.Unmarshal([]byte(tc.in), tc.node)
+		var p Problem
+		c.True(errors.As(err, &p), tc.in)
+		c.Equal(tc.want, p.Error(), tc.in)
+	}
 }

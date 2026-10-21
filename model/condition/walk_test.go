@@ -60,6 +60,7 @@ func TestWalk(t *testing.T) {
 		"children[4] group",
 		"children[4].children[0] const",
 		"children[6] group",
+		"children[6].only_when group",
 	}, walkPaths(tree, all))
 
 	// Returning false skips the nodes beneath.

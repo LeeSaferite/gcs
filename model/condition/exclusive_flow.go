@@ -17,12 +17,12 @@ type flowNet struct {
 	to     []int
 	cap    []int
 	parent []int
-	seen   []uint32 // the search that last reached each node
+	seen   []uint64 // the search that last reached each node
 	goal   []int    // during a probe, each target node's sink edge plus 1
 	queue  []int
 	log    []flowChange
 	marks  []int
-	search uint32
+	search uint64
 }
 
 // flowChange is a logged change: delta added to the capacity of an edge, and when paired taken from its reverse.
@@ -181,7 +181,7 @@ func (n *flowNet) pushPath(node, sinkEdge int) {
 // in parent and returns the node reached, or -1.
 func (n *flowNet) findPath(target int, anyGoal bool) int {
 	if len(n.seen) < len(n.adj) {
-		n.seen = make([]uint32, len(n.adj))
+		n.seen = make([]uint64, len(n.adj))
 		n.parent = make([]int, len(n.adj))
 	}
 	n.search++

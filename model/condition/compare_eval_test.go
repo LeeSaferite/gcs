@@ -29,7 +29,9 @@ func compareFixture() (h *fakeHost, self *fakeItem, kids []*fakeItem) {
 		newItem("c", map[string]Value{"level": absentValue(), "tag": textValue("x"), "load": weightValue(3)}),
 		newItem("d", map[string]Value{"level": numberValue(5), "tag": textValue("y"), "load": numberValue(4)}),
 	}
-	self = newItem("self", map[string]Value{"level": numberValue(4), "weight": weightValue(7), "name": textValue("me")}).
+	self = newItem("self", map[string]Value{
+		"level": numberValue(4), "weight": weightValue(7), "name": textValue("me"), "tl": absentValue(),
+	}).
 		with("children", kids...)
 	return h, self, kids
 }
@@ -69,6 +71,9 @@ func TestCompareOperands(t *testing.T) {
 		{"max", cmpNode(agg(AggregateMax, "level", nil), OpIs, value(5)), Met, 5, ValueNumber, ""},
 		{"max weight", cmpNode(agg(AggregateMax, "load", x), OpIs, Operand{Weight: weightPtr(3)}), Met, 3, ValueWeight, ""},
 		{"max of none", cmpNode(agg(AggregateMax, "level", &Const{}), OpIs, value(0)), Met, 0, ValueNumber, ""},
+		{"min", cmpNode(agg(AggregateMin, "level", nil), OpIs, value(2)), Met, 2, ValueNumber, ""},
+		{"min weight", cmpNode(agg(AggregateMin, "load", x), OpIs, Operand{Weight: weightPtr(1)}), Met, 1, ValueWeight, ""},
+		{"min of none", cmpNode(agg(AggregateMin, "level", &Const{}), OpIs, value(0)), Met, 0, ValueNumber, ""},
 		{"sum of none with weight", cmpNode(agg(AggregateSum, "level", &Const{}), OpIs, Operand{Weight: weightPtr(0)}), Met, 0, ValueWeight, ""},
 		{"untyped both", cmpNode(agg(AggregateSum, "level", &Const{}), OpIs, agg(AggregateMax, "level", &Const{})), Met, 0, ValueNumber, ""},
 		{"sum", cmpNode(Operand{Sum: []Operand{{Attribute: "st"}, {Attribute: "iq"}, value(-2)}}, OpIs, value(20)), Met, 20, ValueNumber, ""},
@@ -76,10 +81,11 @@ func TestCompareOperands(t *testing.T) {
 		{"unknown entity", cmpNode(value(1), OpIs, Operand{Entity: "zz"}), Failed, 0, 0, `unknown entity value "zz"`},
 		{"self text", cmpNode(Operand{Self: "name"}, OpIs, value(1)), Failed, 0, 0, `self has no number or weight field "name"`},
 		{"self missing", cmpNode(Operand{Self: "zz"}, OpIs, value(1)), Failed, 0, 0, `self has no number or weight field "zz"`},
+		{"self not set", cmpNode(Operand{Self: "tl"}, OpAtLeast, value(3)), Failed, 0, 0, `self's "tl" is not set`},
 		{"number against weight", cmpNode(Operand{Self: "weight"}, OpIs, value(1)), Failed, 0, 0, "a number is used with a weight"},
 		{"sum mixing", cmpNode(Operand{Sum: []Operand{value(1), {Self: "weight"}}}, OpIs, value(1)), Failed, 0, 0, "a number is used with a weight"},
 		{"sum failing", cmpNode(Operand{Sum: []Operand{value(1), {Attribute: "zz"}}}, OpIs, value(1)), Failed, 0, 0, `unknown attribute "zz"`},
-		{"members mixing kinds", cmpNode(agg(AggregateSum, "load", nil), OpIs, value(1)), Failed, 0, 0, `members have no number or weight field "load"`},
+		{"members mixing kinds", cmpNode(agg(AggregateSum, "load", nil), OpIs, value(1)), Failed, 0, 0, `members mix numbers and weights in field "load"`},
 		{"members lacking field", cmpNode(agg(AggregateMax, "zz", nil), OpIs, value(1)), Failed, 0, 0, `members have no number or weight field "zz"`},
 		{"members text field", cmpNode(agg(AggregateMax, "tag", nil), OpIs, value(1)), Failed, 0, 0, `members have no number or weight field "tag"`},
 		{"unknown collection", cmpNode(Operand{Aggregate: AggregateCount, Of: "zz"}, OpIs, value(1)), Failed, 0, 0, `unknown collection "zz"`},

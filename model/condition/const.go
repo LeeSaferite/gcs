@@ -23,14 +23,8 @@ type Const struct {
 	Value bool `json:"value"`
 }
 
-// constFields is the method-less shadow Const is written through.
+// constFields is the shadow Const is written and read through; see codec.go.
 type constFields Const
-
-// constWire is the raw form Const is read through.
-type constWire struct {
-	Type  string `json:"type"`
-	Value bool   `json:"value"`
-}
 
 // Clone implements Node.
 func (c *Const) Clone() Node {
@@ -55,12 +49,13 @@ func (c *Const) MarshalJSONTo(enc *jsontext.Encoder) error {
 	return encodeTyped(enc, typeConst, (*constFields)(c))
 }
 
-func decodeConst(raw jsontext.Value) (Node, error) {
-	var w constWire
-	if err := unmarshalWire(raw, &w); err != nil {
-		return nil, err
-	}
-	return &Const{Value: w.Value}, nil
+// UnmarshalJSONFrom implements json.UnmarshalerFrom.
+func (c *Const) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
+	return unmarshalNode(dec, c)
+}
+
+func (c *Const) decode(raw jsontext.Value, depth int) error {
+	return decodeFields(raw, depth, (*constFields)(c))
 }
 
 // eval implements Node.

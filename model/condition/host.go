@@ -23,8 +23,8 @@ type Item any
 type Host interface {
 	// Collection returns every member of a named collection, self included; the engine leaves self out unless asked to
 	// keep it. Entity collections (traits, skills, spells, equipped...) may use self, such as for guards; relative
-	// collections (children, modifiers...) belong to subject. ok is false for an unknown key or when no entity is
-	// available (a filter's host), which fails the evaluation.
+	// collections (children, modifiers...) belong to subject. No item may be listed more than once. ok is false for an
+	// unknown key or when no entity is available (a filter's host), which fails the evaluation.
 	Collection(key string, self, subject Item) (items []Item, ok bool)
 	// Field returns a field of item. ok is false when the key names no field of the item's kind, which fails the
 	// evaluation. A field the item's kind has but that is unset for this item (a nil tech level) returns ok true with

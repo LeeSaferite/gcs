@@ -21,7 +21,7 @@ import (
 const (
 	GroupAll GroupMode = iota
 	GroupAny
-	GroupAtLeast
+	GroupCount
 )
 
 // DefaultGroupMode is the default value.
@@ -31,13 +31,13 @@ const DefaultGroupMode GroupMode = GroupAll
 const FirstGroupMode GroupMode = GroupAll
 
 // LastGroupMode is the last valid value.
-const LastGroupMode GroupMode = GroupAtLeast
+const LastGroupMode GroupMode = GroupCount
 
 // GroupModes holds all possible values.
 var GroupModes = []GroupMode{
 	GroupAll,
 	GroupAny,
-	GroupAtLeast,
+	GroupCount,
 }
 
 // GroupMode holds how many of a group's children must be met.
@@ -58,8 +58,8 @@ func (enum GroupMode) Key() string {
 		return "all"
 	case GroupAny:
 		return "any"
-	case GroupAtLeast:
-		return "at_least"
+	case GroupCount:
+		return "count"
 	default:
 		return DefaultGroupMode.Key()
 	}
@@ -72,8 +72,8 @@ func (enum GroupMode) String() string {
 		return i18n.Text(`all`)
 	case GroupAny:
 		return i18n.Text(`any`)
-	case GroupAtLeast:
-		return i18n.Text(`at least`)
+	case GroupCount:
+		return i18n.Text(`count`)
 	default:
 		return DefaultGroupMode.String()
 	}

@@ -75,9 +75,27 @@ func TestMatcherCancel(t *testing.T) {
 	c.True(errors.Is(err, context.Canceled))
 	c.Equal(Failed, state)
 	m = NewMatcher(&Const{Value: true}, h, Options{})
+	state, err = m.State(ctx, newItem("row", nil))
+	c.True(errors.Is(err, context.Canceled), "a context done before the call")
+	c.Equal(Failed, state)
 	state, err = m.State(t.Context(), newItem("row", nil))
 	c.NoError(err)
 	c.Equal(Met, state)
+}
+
+// TestMatcherKeepsNoItem checks that a Matcher's memos are emptied before State returns, so that it holds on to
+// nothing from the item it matched.
+func TestMatcherKeepsNoItem(t *testing.T) {
+	c := check.New(t)
+	h := newHost()
+	h.replacements = map[string]string{"X": "fire"}
+	m := NewMatcher(&Group{Children: Nodes{&Script{Script: "met"}, checkText("name", criteria.IsText, "@X@")}}, h,
+		Options{})
+	state, err := m.State(t.Context(), newItem("row", map[string]Value{"name": textValue("fire")}))
+	c.NoError(err)
+	c.Equal(Met, state)
+	c.Equal(0, len(m.e.scripts))
+	c.Equal(0, len(m.e.replacements))
 }
 
 // TestMatcherAllocations checks that matching a row allocates nothing, given criteria that don't allocate on their own.

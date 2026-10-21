@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/richardwilkes/gcs/v5/model/criteria"
+	"github.com/richardwilkes/gcs/v5/model/fxp"
 	"github.com/richardwilkes/toolbox/v2/check"
 )
 
@@ -37,8 +38,9 @@ func stateSequences(maxLen int) [][]State {
 }
 
 // expectedGroupState is the reference model, written independently of the engine: the legacy rule of PR #1182, where
-// a child that decides the group does so even when others failed.
-func expectedGroupState(mode GroupMode, n int, not bool, guard *State, states []State) State {
+// a child that decides the group does so even when others failed. A count group holds when its quantity matches the
+// number of Met children, and is decided when it would be whichever way each Failed child had come out.
+func expectedGroupState(mode GroupMode, q *criteria.Number, not bool, guard *State, states []State) State {
 	if guard != nil {
 		switch *guard {
 		case Unmet:
@@ -65,32 +67,66 @@ func expectedGroupState(mode GroupMode, n int, not bool, guard *State, states []
 	if applicable == 0 {
 		return Skipped
 	}
+	result := func(holds bool) State {
+		if holds != not {
+			return Met
+		}
+		return Unmet
+	}
+	if mode == GroupCount {
+		var outcomes [2]bool
+		for ways := range 1 << failed {
+			total := met
+			for bit := range failed {
+				total += (ways >> bit) & 1
+			}
+			holds := total >= 1
+			if q != nil {
+				holds = q.Matches(fxp.FromInteger(total))
+			}
+			if holds {
+				outcomes[1] = true
+			} else {
+				outcomes[0] = true
+			}
+		}
+		if outcomes[0] && outcomes[1] {
+			return Failed
+		}
+		return result(outcomes[1])
+	}
 	need := applicable
-	switch mode {
-	case GroupAny:
+	if mode == GroupAny {
 		need = 1
-	case GroupAtLeast:
-		need = min(n, applicable)
-	default:
 	}
 	met = min(met, need)
 	switch {
 	case met == need:
-		if not {
-			return Unmet
-		}
-		return Met
+		return result(true)
 	case applicable-unmet >= need && failed > 0: // the threshold is still reachable, so the Failed ones decide
 		return Failed
-	case not:
-		return Met
 	default:
-		return Unmet
+		return result(false)
 	}
 }
 
-// TestGroupTruthTables checks all, any and at_least(N) over every sequence of up to three child states, with and
-// without Not and each kind of guard, in every mode.
+// groupQuantities returns the quantities a group of the mode is tested with: none but for count, which takes nil and
+// each comparison of up to n children.
+func groupQuantities(mode GroupMode, n int) []*criteria.Number {
+	if mode != GroupCount {
+		return []*criteria.Number{nil}
+	}
+	list := []*criteria.Number{nil}
+	for _, cmp := range criteria.NumericComparisons {
+		for k := range n + 2 {
+			list = append(list, &criteria.Number{Compare: cmp, Qualifier: fxp.FromInteger(k)})
+		}
+	}
+	return list
+}
+
+// TestGroupTruthTables checks all, any and count over every sequence of up to three child states, with and without
+// Not and each kind of guard, in every mode and, for count, with every comparison.
 func TestGroupTruthTables(t *testing.T) {
 	c := check.New(t)
 	h := newHost()
@@ -101,22 +137,15 @@ func TestGroupTruthTables(t *testing.T) {
 			children[i] = leafFor(s)
 		}
 		for _, mode := range GroupModes {
-			ns := []int{0}
-			if mode == GroupAtLeast {
-				ns = nil
-				for n := 1; n <= len(states); n++ {
-					ns = append(ns, n)
-				}
-			}
-			for _, n := range ns {
+			for _, q := range groupQuantities(mode, len(states)) {
 				for _, not := range []bool{false, true} {
 					for _, guard := range guards {
-						g := &Group{Mode: mode, N: n, Not: not, Children: children}
+						g := &Group{Mode: mode, Quantity: q, Not: not, Children: children}
 						if guard != nil {
 							g.OnlyWhen = Ref{Node: leafFor(*guard)}
 						}
-						want := expectedGroupState(mode, n, not, guard, states)
-						desc := fmt.Sprintf("%v n=%d not=%v guard=%v states=%v", mode, n, not, guardName(guard), states)
+						want := expectedGroupState(mode, q, not, guard, states)
+						desc := fmt.Sprintf("%v q=%v not=%v guard=%v states=%v", mode, q, not, guardName(guard), states)
 						full := evalAll(t, g, h, nil)
 						c.Equal(want, full.State, desc)
 						wantChildren := len(states)

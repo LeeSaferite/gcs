@@ -11,6 +11,7 @@ package condition
 
 import (
 	"fmt"
+	"math/rand/v2"
 	"testing"
 
 	"github.com/richardwilkes/gcs/v5/model/criteria"
@@ -236,5 +237,32 @@ func TestPoolBudget(t *testing.T) {
 			r = eval(t, tree, h, self, Options{Budget: budget})
 			c.True(r.State == Met || r.Reason == "too complex to decide", budget)
 		}
+	}
+}
+
+// TestGroupedCountStopsOnceDecided checks that a YesNo exclusive grouped count stops searching once its quantity is
+// decided, so a Met count over many colleges that can't all be filled doesn't run out of budget looking for the most
+// that can.
+func TestGroupedCountStopsOnceDecided(t *testing.T) {
+	c := check.New(t)
+	colleges := make([]string, 50)
+	for i := range colleges {
+		colleges[i] = fmt.Sprintf("College %d", i)
+	}
+	for seed := range uint64(5) {
+		r := rand.New(rand.NewPCG(seed, 1)) //nolint:gosec // Not for security.
+		spells := make([]*fakeItem, 100)
+		for i := range spells {
+			var in []string
+			for range 1 + r.IntN(4) {
+				in = append(in, colleges[r.IntN(len(colleges))])
+			}
+			spells[i] = spell(fmt.Sprintf("Spell %d", i), in...)
+		}
+		h, self := spellBook(spells...)
+		count := &Count{Of: "spells", GroupBy: "college", PerGroup: atLeast(5), Quantity: atLeast(3), Exclusive: true}
+		c.Equal(Met, eval(t, count, h, self, yesNo).State, seed)
+		count.Quantity = numberCritPtr(criteria.AtMostNumber, 2)
+		c.Equal(Unmet, eval(t, count, h, self, yesNo).State, seed)
 	}
 }

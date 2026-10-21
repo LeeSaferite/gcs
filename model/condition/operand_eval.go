@@ -79,6 +79,10 @@ func (oe *operandEval) number(key string, lookup func(string) (fxp.Int, bool), f
 // self resolves a Number or Weight field of self. Anything else is unresolved.
 func (oe *operandEval) self(key string) (operandValue, *Result) {
 	v, ok := oe.e.host.Field(oe.e.self, key)
+	if ok && v.Kind == ValueAbsent {
+		r := failure(fmt.Sprintf(i18n.Text("self's %q is not set"), key))
+		return operandValue{}, &r
+	}
 	if !ok || (v.Kind != ValueNumber && v.Kind != ValueWeight) {
 		r := failure(fmt.Sprintf(i18n.Text("self has no number or weight field %q"), key))
 		return operandValue{}, &r
@@ -86,9 +90,9 @@ func (oe *operandEval) self(key string) (operandValue, *Result) {
 	return operandValue{value: v.Number, kind: v.Kind}, nil
 }
 
-// aggregate counts the matching members, or sums or finds the maximum of their Field, skipping members whose field is
-// Absent. A field the members' kind lacks, or that is neither a Number nor a Weight, fails, as do members whose fields
-// mix the two. The maximum of nothing is 0.
+// aggregate counts the matching members, or sums or finds the maximum or minimum of their Field, skipping members
+// whose field is Absent. A field the members' kind lacks, or that is neither a Number nor a Weight, fails, as do
+// members whose fields mix the two. The maximum or minimum of nothing is 0.
 func (oe *operandEval) aggregate(o *Operand, f frame) (operandValue, *Result) {
 	var v operandValue
 	var extreme []contribution
@@ -103,15 +107,19 @@ func (oe *operandEval) aggregate(o *Operand, f frame) (operandValue, *Result) {
 		switch {
 		case ok && field.Kind == ValueAbsent:
 			return true
-		case !ok || (field.Kind != ValueNumber && field.Kind != ValueWeight) ||
-			(v.kind != ValueAbsent && field.Kind != v.kind):
+		case !ok || (field.Kind != ValueNumber && field.Kind != ValueWeight):
 			r := failure(fmt.Sprintf(i18n.Text("members have no number or weight field %q"), o.Field))
+			bad = &r
+			return false
+		case v.kind != ValueAbsent && field.Kind != v.kind:
+			r := failure(fmt.Sprintf(i18n.Text("members mix numbers and weights in field %q"), o.Field))
 			bad = &r
 			return false
 		case o.Aggregate == AggregateSum:
 			v.value += field.Number
 			oe.add(item, where)
-		case v.kind == ValueAbsent || field.Number > v.value:
+		case v.kind == ValueAbsent || (o.Aggregate == AggregateMax && field.Number > v.value) ||
+			(o.Aggregate == AggregateMin && field.Number < v.value):
 			v.value = field.Number
 			extreme = oe.keep(extreme[:0], item, where)
 		case field.Number == v.value:

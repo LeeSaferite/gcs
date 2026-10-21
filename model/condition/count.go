@@ -11,10 +11,10 @@ package condition
 
 import (
 	"encoding/json/jsontext"
+	"errors"
 	"hash"
 
 	"github.com/richardwilkes/gcs/v5/model/criteria"
-	"github.com/richardwilkes/gcs/v5/model/fxp"
 	"github.com/richardwilkes/toolbox/v2/i18n"
 	"github.com/richardwilkes/toolbox/v2/xhash"
 )
@@ -39,51 +39,19 @@ func (m *Members) hashMembers(h hash.Hash) {
 	m.Where.hash(h)
 }
 
-// decodeMembers decodes the where of members at the given depth.
-func (m *Members) decodeWhere(raw jsontext.Value, depth int) error {
-	var err error
-	if m.Where.Node, err = decodeRef(raw, depth); err != nil {
-		return at(Slot{Kind: SlotWhere}, err)
-	}
-	return nil
-}
-
 // Count counts the members of a collection that pass a where, optionally grouped by the values of a field. An
 // exclusive grouped count counts each member toward one of its values only. Wire type "count".
 type Count struct {
 	Members
-	Quantity  *criteria.Number `json:"quantity"` // nil means at least 1; written exactly when non-nil, "any" as {}
+	Quantity  *criteria.Number `json:"quantity,omitzero"` // nil means at least 1; see canonicalQuantity
 	GroupBy   string           `json:"group_by,omitzero"`
-	PerGroup  *criteria.Number `json:"per_group"` // nil means at least 1; written like Quantity
+	PerGroup  *criteria.Number `json:"per_group,omitzero"` // as Quantity, of each group's members
 	Exclusive bool             `json:"exclusive,omitzero"`
 	Not       bool             `json:"not,omitzero"`
 }
 
-// countFields is the field-by-field shadow Count is written through, with wrappers that write Quantity and PerGroup
-// exactly when they are non-nil.
-type countFields struct {
-	Of          string      `json:"of,omitzero"`
-	IncludeSelf bool        `json:"include_self,omitzero"`
-	Where       Ref         `json:"where,omitzero"`
-	Quantity    quantityRef `json:"quantity,omitzero"`
-	GroupBy     string      `json:"group_by,omitzero"`
-	PerGroup    quantityRef `json:"per_group,omitzero"`
-	Exclusive   bool        `json:"exclusive,omitzero"`
-	Not         bool        `json:"not,omitzero"`
-}
-
-// countWire is the raw form Count is read through.
-type countWire struct {
-	Type        string                  `json:"type"`
-	Of          string                  `json:"of"`
-	IncludeSelf bool                    `json:"include_self"`
-	Where       jsontext.Value          `json:"where"`
-	Quantity    *criterionWire[fxp.Int] `json:"quantity"`
-	GroupBy     string                  `json:"group_by"`
-	PerGroup    *criterionWire[fxp.Int] `json:"per_group"`
-	Exclusive   bool                    `json:"exclusive"`
-	Not         bool                    `json:"not"`
-}
+// countFields is the shadow Count is written and read through; see codec.go.
+type countFields Count
 
 // Clone implements Node.
 func (c *Count) Clone() Node {
@@ -114,7 +82,10 @@ func (c *Count) validate(v *validator) {
 	if c.Of == "" {
 		v.report(i18n.Text("no collection"))
 	}
-	if c.GroupBy == "" && c.PerGroup != nil {
+	if !quantityKnown(c.Quantity) || !quantityKnown(c.PerGroup) {
+		v.report(i18n.Text("a quantity has an unknown comparison"))
+	}
+	if c.GroupBy == "" && canonicalQuantity(c.PerGroup) != nil {
 		v.report(i18n.Text("a per-group quantity without a group-by field"))
 	}
 	if c.Exclusive {
@@ -135,40 +106,22 @@ func (c *Count) walk(w *walker) {
 
 // MarshalJSONTo implements json.MarshalerTo.
 func (c *Count) MarshalJSONTo(enc *jsontext.Encoder) error {
-	return encodeTyped(enc, typeCount, &countFields{
-		Of:          c.Of,
-		IncludeSelf: c.IncludeSelf,
-		Where:       c.Where,
-		Quantity:    quantityRef{p: canonicalQuantity(c.Quantity)},
-		GroupBy:     c.GroupBy,
-		PerGroup:    quantityRef{p: canonicalQuantity(c.PerGroup)},
-		Exclusive:   c.Exclusive,
-		Not:         c.Not,
-	})
+	if !quantityKnown(c.Quantity) || !quantityKnown(c.PerGroup) {
+		return errors.New(i18n.Text("a quantity has an unknown comparison"))
+	}
+	other := *c
+	other.Quantity = canonicalQuantity(c.Quantity)
+	other.PerGroup = canonicalQuantity(c.PerGroup)
+	return encodeTyped(enc, typeCount, (*countFields)(&other))
 }
 
-func decodeCount(raw jsontext.Value, depth int) (Node, error) {
-	var w countWire
-	if err := unmarshalWire(raw, &w); err != nil {
-		return nil, err
-	}
-	c := &Count{
-		Of: w.Of, IncludeSelf: w.IncludeSelf,
-		GroupBy:   w.GroupBy,
-		Exclusive: w.Exclusive,
-		Not:       w.Not,
-	}
-	var err error
-	if c.Quantity, err = readQuantity(w.Quantity, "quantity"); err != nil {
-		return nil, err
-	}
-	if c.PerGroup, err = readQuantity(w.PerGroup, "per_group"); err != nil {
-		return nil, err
-	}
-	if err = c.decodeWhere(w.Where, depth+1); err != nil {
-		return nil, err
-	}
-	return c, nil
+// UnmarshalJSONFrom implements json.UnmarshalerFrom.
+func (c *Count) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
+	return unmarshalNode(dec, c)
+}
+
+func (c *Count) decode(raw jsontext.Value, depth int) error {
+	return decodeFields(raw, depth, (*countFields)(c))
 }
 
 func clonePtr[T any](p *T) *T {

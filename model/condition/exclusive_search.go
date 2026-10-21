@@ -14,8 +14,9 @@ package condition
 // it, with the incumbent as the bound. Including a value opens its sink and augments from the current flow, which
 // never takes flow off a sink already filled, so a value that can't be filled shows the include is infeasible. Each
 // node prunes with the relaxation bound: the values still undecided can add at most min(their number, F / p), where F
-// is the flow they could still take. It returns false when the budget ran out.
-func (s *poolSolver) maximize(d *demand) ([]owner, bool) {
+// is the flow they could still take. The search stops early once enough values are filled. It returns false when the
+// budget ran out.
+func (s *poolSolver) maximize(d *demand, enough int) ([]owner, bool) {
 	net := s.net
 	if d.p == 1 {
 		target := net.open(d.node, d.sink, len(d.values))
@@ -30,7 +31,7 @@ func (s *poolSolver) maximize(d *demand) ([]owner, bool) {
 	reachable, _ := probes(d, 0)
 	var search func(from, count int)
 	search = func(from, count int) {
-		if !ok || bestCount == len(reachable) {
+		if !ok || bestCount == len(reachable) || bestCount >= enough {
 			return
 		}
 		if count > bestCount {

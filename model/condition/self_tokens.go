@@ -11,6 +11,7 @@ package condition
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"unicode"
@@ -24,6 +25,10 @@ import (
 const maxAlternatives = 64
 
 const selfTokenPrefix = "{self."
+
+// tokenStandIn stands in for a token when looking for the nameable markers of a qualifier. It is a private use rune,
+// since a control rune would end a marker.
+const tokenStandIn = '\uE000'
 
 // qualifierPart is a literal run of a text qualifier, or a {self.<field>} token naming a field of self.
 type qualifierPart struct {
@@ -76,13 +81,49 @@ func notKeyRune(r rune) bool {
 	return r != '_' && !unicode.IsLetter(r) && !unicode.IsDigit(r)
 }
 
-// tokenProblem returns what is wrong with the self tokens of a qualifier, or "".
+// tokenProblem returns what is wrong with the self tokens of a qualifier, or "". Replacements apply to each literal run
+// on its own, so a nameable marker may not hold a token.
 func tokenProblem(q string) string {
 	if !strings.ContainsRune(q, '{') {
 		return ""
 	}
-	_, problem := scanSelfTokens(q)
-	return problem
+	sq, problem := scanSelfTokens(q)
+	if problem != "" {
+		return problem
+	}
+	var joined strings.Builder
+	for _, part := range sq.parts {
+		if part.token {
+			joined.WriteRune(tokenStandIn)
+		} else {
+			joined.WriteString(part.text)
+		}
+	}
+	for _, part := range nameable.ExtractParts(joined.String(), nameable.MarkerDelimiter, nameable.MarkerDelimiter) {
+		if part.Placeholder && strings.ContainsRune(part.Value, tokenStandIn) {
+			return i18n.Text("a nameable marker holds a {self.<field>} token")
+		}
+	}
+	return ""
+}
+
+// literalRuns returns the literal runs of a text qualifier, which replacements apply to: the qualifier itself when it
+// holds no "{". A qualifier that doesn't parse has none.
+func literalRuns(q string) []string {
+	if !strings.ContainsRune(q, '{') {
+		return []string{q}
+	}
+	sq, _ := scanSelfTokens(q)
+	if sq == nil {
+		return nil
+	}
+	runs := make([]string, 0, len(sq.parts))
+	for _, part := range sq.parts {
+		if !part.token {
+			runs = append(runs, part.text)
+		}
+	}
+	return runs
 }
 
 // selfQualifier returns the parsed qualifier of a check's text criterion, or nil when it holds no "{" and so can be
@@ -105,12 +146,14 @@ func (e *evaluator) selfQualifier(c *Check) *selfQualifier {
 
 // matchTokens matches a value against a qualifier holding self tokens: replacements apply to the literal runs, a List
 // value splits the qualifier on commas, token values are substituted verbatim (a List token value giving one
-// alternative per element), and the alternatives are then matched with no further replacements.
+// alternative per element), and the alternatives are then matched with no further replacements. Split alternatives
+// that come out empty are dropped, as criteria.Text.MatchesList drops empty pieces.
 func (e *evaluator) matchTokens(c *Check, sq *selfQualifier, v Value, f frame) (bool, *outcome) {
 	repl := e.replacementsFor(f)
+	split := v.Kind == ValueList
 	var pieces [][]string
 	total := 0
-	for _, piece := range splitPieces(sq.parts, repl, v.Kind == ValueList) {
+	for _, piece := range splitPieces(sq.parts, repl, split) {
 		alts := []string{""}
 		for _, part := range piece {
 			values := []string{part.text}
@@ -134,7 +177,15 @@ func (e *evaluator) matchTokens(c *Check, sq *selfQualifier, v Value, f frame) (
 			}
 		}
 		total += len(alts)
-		pieces = append(pieces, alts)
+		if split {
+			alts = slices.DeleteFunc(alts, func(alt string) bool { return alt == "" })
+		}
+		if len(alts) != 0 {
+			pieces = append(pieces, alts)
+		}
+	}
+	if len(pieces) == 0 {
+		pieces = [][]string{{""}}
 	}
 	elements := []string{v.Text}
 	if v.Kind == ValueList {

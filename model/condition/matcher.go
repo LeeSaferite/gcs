@@ -46,9 +46,10 @@ func (m *Matcher) State(ctx context.Context, item Item) (State, error) {
 	case m.problem != "":
 		return Failed, nil
 	}
+	if err := ctx.Err(); err != nil {
+		return Failed, err
+	}
 	e := m.e
-	clear(e.replacements)
-	clear(e.scripts)
 	e.ctx = ctx
 	e.self = item
 	e.budget = e.opt.Budget
@@ -56,6 +57,8 @@ func (m *Matcher) State(ctx context.Context, item Item) (State, error) {
 	state := e.test(m.root, frame{subject: item}).state
 	err := e.err
 	e.ctx, e.err, e.self = nil, nil, nil
+	clear(e.replacements)
+	clear(e.scripts)
 	if err != nil {
 		return Failed, err
 	}

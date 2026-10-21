@@ -11,10 +11,10 @@ package condition
 
 import (
 	"encoding/json/jsontext"
+	"errors"
 	"hash"
 
 	"github.com/richardwilkes/gcs/v5/model/criteria"
-	"github.com/richardwilkes/gcs/v5/model/fxp"
 	"github.com/richardwilkes/gcs/v5/model/nameable"
 	"github.com/richardwilkes/toolbox/v2/i18n"
 	"github.com/richardwilkes/toolbox/v2/xhash"
@@ -22,8 +22,8 @@ import (
 
 var _ Node = &Check{}
 
-// Check tests one field of the subject. At most one criterion may be set; none means the subject has the field. Wire
-// type "check".
+// Check tests one field of the subject. At most one criterion may be set; none means the subject has the field, or for
+// a Bool field that it is true. Wire type "check".
 type Check struct {
 	Field  string          `json:"field"`
 	Not    bool            `json:"not,omitzero"`
@@ -32,18 +32,8 @@ type Check struct {
 	Weight criteria.Weight `json:"weight,omitzero"`
 }
 
-// checkFields is the method-less shadow Check is written through.
+// checkFields is the shadow Check is written and read through; see codec.go.
 type checkFields Check
-
-// checkWire is the raw form Check is read through.
-type checkWire struct {
-	Type   string                     `json:"type"`
-	Field  string                     `json:"field"`
-	Not    bool                       `json:"not"`
-	Text   *criterionWire[string]     `json:"text"`
-	Number *criterionWire[fxp.Int]    `json:"number"`
-	Weight *criterionWire[fxp.Weight] `json:"weight"`
-}
 
 // Clone implements Node.
 func (c *Check) Clone() Node {
@@ -64,7 +54,7 @@ func (c *Check) Hash(h hash.Hash) {
 // FillWithNameableKeys implements Node.
 func (c *Check) FillWithNameableKeys(m, existing map[string]string) {
 	if !c.Text.IsZero() {
-		nameable.Extract(m, existing, c.Text.Qualifier)
+		nameable.Extract(m, existing, literalRuns(c.Text.Qualifier)...)
 	}
 }
 
@@ -81,8 +71,7 @@ func (c *Check) validate(v *validator) {
 	if set > 1 {
 		v.report(i18n.Text("more than one criterion"))
 	}
-	if c.Text.Compare != c.Text.Compare.EnsureValid() || c.Number.Compare != c.Number.Compare.EnsureValid() ||
-		c.Weight.Compare != c.Weight.Compare.EnsureValid() {
+	if !c.comparisonsKnown() {
 		v.report(i18n.Text("a criterion has an unknown comparison"))
 	}
 	if !c.Text.IsZero() {
@@ -94,8 +83,16 @@ func (c *Check) validate(v *validator) {
 
 func (c *Check) walk(_ *walker) {}
 
+func (c *Check) comparisonsKnown() bool {
+	return c.Text.Compare == c.Text.Compare.EnsureValid() && c.Number.Compare == c.Number.Compare.EnsureValid() &&
+		c.Weight.Compare == c.Weight.Compare.EnsureValid()
+}
+
 // MarshalJSONTo implements json.MarshalerTo.
 func (c *Check) MarshalJSONTo(enc *jsontext.Encoder) error {
+	if !c.comparisonsKnown() {
+		return errors.New(i18n.Text("a criterion has an unknown comparison"))
+	}
 	other := *c
 	other.Text = canonicalText(other.Text)
 	other.Number = canonicalNumber(other.Number)
@@ -103,21 +100,11 @@ func (c *Check) MarshalJSONTo(enc *jsontext.Encoder) error {
 	return encodeTyped(enc, typeCheck, (*checkFields)(&other))
 }
 
-func decodeCheck(raw jsontext.Value) (Node, error) {
-	var w checkWire
-	if err := unmarshalWire(raw, &w); err != nil {
-		return nil, err
-	}
-	c := &Check{Field: w.Field, Not: w.Not}
-	var err error
-	if c.Text, err = readText(w.Text, "text"); err != nil {
-		return nil, err
-	}
-	if c.Number, err = readNumber(w.Number, "number"); err != nil {
-		return nil, err
-	}
-	if c.Weight, err = readWeight(w.Weight, "weight"); err != nil {
-		return nil, err
-	}
-	return c, nil
+// UnmarshalJSONFrom implements json.UnmarshalerFrom.
+func (c *Check) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
+	return unmarshalNode(dec, c)
+}
+
+func (c *Check) decode(raw jsontext.Value, depth int) error {
+	return decodeFields(raw, depth, (*checkFields)(c))
 }

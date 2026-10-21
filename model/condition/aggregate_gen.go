@@ -23,6 +23,7 @@ const (
 	AggregateCount
 	AggregateSum
 	AggregateMax
+	AggregateMin
 )
 
 // DefaultAggregate is the default value.
@@ -32,7 +33,7 @@ const DefaultAggregate Aggregate = AggregateNone
 const FirstAggregate Aggregate = AggregateNone
 
 // LastAggregate is the last valid value.
-const LastAggregate Aggregate = AggregateMax
+const LastAggregate Aggregate = AggregateMin
 
 // Aggregates holds all possible values.
 var Aggregates = []Aggregate{
@@ -40,6 +41,7 @@ var Aggregates = []Aggregate{
 	AggregateCount,
 	AggregateSum,
 	AggregateMax,
+	AggregateMin,
 }
 
 // Aggregate holds the way an operand combines the members of a collection.
@@ -64,6 +66,8 @@ func (enum Aggregate) Key() string {
 		return "sum"
 	case AggregateMax:
 		return "max"
+	case AggregateMin:
+		return "min"
 	default:
 		return DefaultAggregate.Key()
 	}
@@ -80,6 +84,8 @@ func (enum Aggregate) String() string {
 		return i18n.Text(`sum`)
 	case AggregateMax:
 		return i18n.Text(`maximum`)
+	case AggregateMin:
+		return i18n.Text(`minimum`)
 	default:
 		return DefaultAggregate.String()
 	}

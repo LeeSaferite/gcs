@@ -46,7 +46,7 @@ func TestValidate(t *testing.T) {
 		node Node
 		want []string
 	}{
-		{"valid", &Group{Mode: GroupAtLeast, N: 1, Children: Nodes{
+		{"valid", &Group{Mode: GroupCount, Quantity: atLeast(2), Children: Nodes{
 			checkText("name", criteria.IsText, "{self.name} {{x}"),
 			&Script{Script: "true"},
 			&Count{Of: "spells", GroupBy: "college", PerGroup: atLeast(2), Exclusive: true},
@@ -55,15 +55,14 @@ func TestValidate(t *testing.T) {
 		}}, nil},
 		{"nil", nil, nil},
 		{"empty group", &Group{}, nil},
-		{"at_least zero", &Group{Mode: GroupAtLeast, Children: Nodes{&Const{}}}, []string{
-			"the number of children needed is outside 1 to the number of children",
+		{"count more than there are", &Group{Mode: GroupCount, Quantity: atLeast(2), Children: Nodes{&Const{}}}, nil},
+		{"count unknown comparison", &Group{Mode: GroupCount, Quantity: numberCritPtr(99, 1), Children: Nodes{&Const{}}}, []string{
+			"the quantity has an unknown comparison",
 		}},
-		{"at_least too many", &Group{Mode: GroupAtLeast, N: 2, Children: Nodes{&Const{}}}, []string{
-			"the number of children needed is outside 1 to the number of children",
+		{"quantity on all", &Group{Quantity: atLeast(2), Children: Nodes{&Const{}}}, []string{
+			`a quantity is set, but the mode is not "count"`,
 		}},
-		{"n on all", &Group{N: 1, Children: Nodes{&Const{}}}, []string{
-			`a number of children needed is set, but the mode is not "at least"`,
-		}},
+		{"at least 1 on all", &Group{Quantity: atLeast(1), Children: Nodes{&Const{}}}, nil},
 		{"unknown mode", &Group{Mode: 9}, []string{"unknown group mode"}},
 		{"nil child", &Group{Children: Nodes{&Const{}, nil}}, []string{"children[1]: missing child"}},
 		{"exclusive any", &Group{Mode: GroupAny, Exclusive: true, Children: Nodes{spells(nil)}}, []string{
@@ -72,6 +71,10 @@ func TestValidate(t *testing.T) {
 		{"exclusive non-count", &Group{Exclusive: true, Children: Nodes{nil, &Const{}}}, []string{
 			"an exclusive group holds something other than a count", "children[0]: missing child",
 		}},
+		{"exclusive exclusive", &Group{Exclusive: true, Children: Nodes{&Count{Of: "spells", Exclusive: true}}}, []string{
+			"an exclusive group holds a count that is exclusive itself", "children[0]: exclusive without a group-by field",
+		}},
+		{"count unknown quantity", spells(numberCritPtr(99, 1)), []string{"a quantity has an unknown comparison"}},
 		{"exclusive negated", &Group{Exclusive: true, Children: Nodes{&Count{Of: "spells", Not: true}}}, []string{
 			"an exclusive group holds a count that is negated or grouped",
 		}},
@@ -141,13 +144,14 @@ func TestValidate(t *testing.T) {
 		{"sum problems", &Compare{Left: Operand{Sum: []Operand{{}, value(1)}}, Right: value(1)}, []string{
 			"left.sum[0]: an operand has no value",
 		}},
-		{"script language", &Script{Script: "x", Lang: "js"}, []string{"unknown script language"}},
+		{"script language", &Script{Script: "x", Lang: "cel"}, []string{"unknown script language"}},
+		{"js", &Script{Script: "x", Lang: "js"}, nil},
 		{"pre-order", &Group{
-			N:        1,
+			Quantity: atLeast(2),
 			OnlyWhen: Ref{Node: &Check{}},
 			Children: Nodes{&Count{}, &Group{Children: Nodes{nil}}},
 		}, []string{
-			`a number of children needed is set, but the mode is not "at least"`,
+			`a quantity is set, but the mode is not "count"`,
 			"only_when: no field",
 			"children[0]: no collection",
 			"children[1].children[0]: missing child",

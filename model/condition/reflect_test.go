@@ -31,8 +31,8 @@ var (
 // the canonical view. It is not a valid tree; Validate reports several problems.
 func fullTree() *Group {
 	return &Group{
-		Mode:      GroupAtLeast,
-		N:         2,
+		Mode:      GroupCount,
+		Quantity:  atLeast(2),
 		Not:       true,
 		Exclusive: true,
 		OnlyWhen: Ref{Node: &Check{

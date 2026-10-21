@@ -121,7 +121,7 @@ func (c *Count) collect(r *Result, members []Item, wheres []Result, used []bool)
 			r.Children = append(r.Children, wheres[i])
 		}
 	}
-	if r.State == Met && !c.Not {
+	if r.State == Met && !c.Not && !vacuous(c.Quantity) {
 		r.Specificity = 1
 	}
 }

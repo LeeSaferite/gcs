@@ -27,16 +27,8 @@ type Compare struct {
 	Right Operand   `json:"right"`
 }
 
-// compareFields is the method-less shadow Compare is written through.
+// compareFields is the shadow Compare is written and read through; see codec.go.
 type compareFields Compare
-
-// compareWire is the raw form Compare is read through.
-type compareWire struct {
-	Type  string         `json:"type"`
-	Left  jsontext.Value `json:"left"`
-	Op    *string        `json:"op"`
-	Right jsontext.Value `json:"right"`
-}
 
 // Clone implements Node.
 func (c *Compare) Clone() Node {
@@ -83,23 +75,13 @@ func (c *Compare) MarshalJSONTo(enc *jsontext.Encoder) error {
 	return encodeTyped(enc, typeCompare, (*compareFields)(c))
 }
 
-func decodeCompare(raw jsontext.Value, depth int) (Node, error) {
-	var w compareWire
-	if err := unmarshalWire(raw, &w); err != nil {
-		return nil, err
-	}
-	op, err := requiredKey(w.Op, "op", ExtractKnownCompareOp)
-	if err != nil {
-		return nil, err
-	}
-	c := &Compare{Op: op}
-	if err = c.Left.decodeSide(w.Left, depth+1); err != nil {
-		return nil, at(Slot{Kind: SlotLeft}, err)
-	}
-	if err = c.Right.decodeSide(w.Right, depth+1); err != nil {
-		return nil, at(Slot{Kind: SlotRight}, err)
-	}
-	return c, nil
+// UnmarshalJSONFrom implements json.UnmarshalerFrom.
+func (c *Compare) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
+	return unmarshalNode(dec, c)
+}
+
+func (c *Compare) decode(raw jsontext.Value, depth int) error {
+	return decodeRequired(raw, depth, (*compareFields)(c), "op", &c.Op, LastCompareOp+1)
 }
 
 // eval implements Node. Both operands must resolve, and a Number may not be compared with a Weight.

@@ -365,6 +365,11 @@ var allEnums = []*enumInfo{
 				Key:    "max",
 				String: "maximum",
 			},
+			{
+				Name:   "AggregateMin",
+				Key:    "min",
+				String: "minimum",
+			},
 		},
 	},
 	{
@@ -420,9 +425,9 @@ var allEnums = []*enumInfo{
 				String: "any",
 			},
 			{
-				Name:   "GroupAtLeast",
-				Key:    "at_least",
-				String: "at least",
+				Name:   "GroupCount",
+				Key:    "count",
+				String: "count",
 			},
 		},
 	},

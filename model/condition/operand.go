@@ -12,6 +12,7 @@ package condition
 import (
 	"encoding/json/jsontext"
 	"encoding/json/v2"
+	"errors"
 	"hash"
 
 	"github.com/richardwilkes/gcs/v5/model/fxp"
@@ -45,31 +46,14 @@ type Operand struct {
 	Self      string      `json:"self,omitzero"`
 	Aggregate Aggregate   `json:"aggregate,omitzero"`
 	Members               // with Aggregate only
-	Field     string      `json:"field,omitzero"` // sum and max only
+	Field     string      `json:"field,omitzero"` // sum, max and min only
 	Sum       []Operand   `json:"sum,omitempty"`
 	Scale     *fxp.Int    `json:"scale,omitzero"`
 	Offset    fxp.Int     `json:"offset,omitzero"`
 }
 
-// operandFields is the method-less shadow Operand is written through.
+// operandFields is the shadow Operand is written and read through; see codec.go.
 type operandFields Operand
-
-// operandWire is the raw form Operand is read through.
-type operandWire struct {
-	Value       *fxp.Int         `json:"value"`
-	Weight      *fxp.Weight      `json:"weight"`
-	Attribute   string           `json:"attribute"`
-	Entity      string           `json:"entity"`
-	Self        string           `json:"self"`
-	Aggregate   string           `json:"aggregate"`
-	Of          string           `json:"of"`
-	IncludeSelf bool             `json:"include_self"`
-	Where       jsontext.Value   `json:"where"`
-	Field       string           `json:"field"`
-	Sum         []jsontext.Value `json:"sum"`
-	Scale       *fxp.Int         `json:"scale"`
-	Offset      fxp.Int          `json:"offset"`
-}
 
 // Source returns where the operand takes its value from: SourceNone when nothing is set, SourceMany when more than
 // one source is.
@@ -155,7 +139,7 @@ func (o *Operand) validate(v *validator) {
 		if o.Field != "" {
 			v.report(i18n.Text("a count has a field"))
 		}
-	case AggregateSum, AggregateMax:
+	case AggregateSum, AggregateMax, AggregateMin:
 		if o.Field == "" {
 			v.report(i18n.Text("an aggregate has no field"))
 		}
@@ -192,16 +176,19 @@ func (o *Operand) constants() (number, weight bool) {
 
 // MarshalJSONTo implements json.MarshalerTo.
 func (o *Operand) MarshalJSONTo(enc *jsontext.Encoder) error {
+	if o.Aggregate != o.Aggregate.EnsureValid() {
+		return errors.New(i18n.Text("unknown aggregate"))
+	}
 	return json.MarshalEncode(enc, (*operandFields)(o))
 }
 
-// decodeSide decodes one side of a compare. An absent side decodes like {}: an operand with no source, which Validate
-// reports.
-func (o *Operand) decodeSide(raw jsontext.Value, depth int) error {
-	if len(raw) == 0 {
-		raw = jsontext.Value("{}")
+// UnmarshalJSONFrom implements json.UnmarshalerFrom.
+func (o *Operand) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
+	raw, err := dec.ReadValue()
+	if err != nil {
+		return err
 	}
-	return o.decode(raw, depth)
+	return o.decode(raw, 1)
 }
 
 func (o *Operand) decode(raw jsontext.Value, depth int) error {
@@ -211,36 +198,9 @@ func (o *Operand) decode(raw jsontext.Value, depth int) error {
 	case raw.Kind() != '{':
 		return problem(i18n.Text("an operand is not an object"))
 	}
-	var w operandWire
-	if err := unmarshalWire(raw, &w); err != nil {
-		return err
-	}
-	agg, err := knownKey(w.Aggregate, "aggregate", ExtractKnownAggregate)
-	if err != nil {
-		return err
-	}
-	*o = Operand{
-		Value:     w.Value,
-		Weight:    w.Weight,
-		Attribute: w.Attribute,
-		Entity:    w.Entity,
-		Self:      w.Self,
-		Aggregate: agg,
-		Of:        w.Of, IncludeSelf: w.IncludeSelf,
-		Field:  w.Field,
-		Scale:  w.Scale,
-		Offset: w.Offset,
-	}
-	if err = o.decodeWhere(w.Where, depth+1); err != nil {
-		return err
-	}
-	if w.Sum != nil {
-		o.Sum = make([]Operand, len(w.Sum))
-		for i, one := range w.Sum {
-			if err = o.Sum[i].decode(one, depth+1); err != nil {
-				return at(Slot{Kind: SlotSum, Index: i}, err)
-			}
-		}
+	*o = Operand{}
+	if err := json.Unmarshal(raw, (*operandFields)(o), decodeOptions(depth)); err != nil {
+		return decodeError(err)
 	}
 	return nil
 }

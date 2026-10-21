@@ -49,8 +49,7 @@ func (e *evaluator) testRef(r Ref, f frame) outcome {
 }
 
 // test is the YesNo evaluation of a group. The guard comes first, then the children, stopping once nothing further
-// can change the state (see decided): all at the first Unmet, any at the first Met, at_least once N are Met or the
-// Unmet children alone put N out of reach.
+// can change the state (see decided).
 func (g *Group) test(e *evaluator, f frame) outcome {
 	if !g.OnlyWhen.IsZero() {
 		guard := e.testRef(g.OnlyWhen, f)

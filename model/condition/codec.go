@@ -9,12 +9,20 @@
 
 package condition
 
+// Each node type has a method-less shadow type (type checkFields Check, and so on) holding the same fields. A node is
+// written and read through its shadow, which keeps json/v2 from calling the node's own MarshalJSONTo or
+// UnmarshalJSONFrom again. Writing puts the wire type ahead of the shadow's fields. Reading is strict: it rejects
+// unknown members, and it replaces json/v2's handling of the nested nodes, operands, criteria and enums with the
+// decoders below, which reject what the lenient defaults would turn into something else (an unknown comparison would
+// become "any", for one). A Ref that holds a tree that fails to decode keeps it as read; see Ref.UnmarshalJSONFrom.
+
 import (
 	"encoding/json/jsontext"
 	"encoding/json/v2"
 	"errors"
 	"fmt"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/richardwilkes/gcs/v5/model/criteria"
@@ -46,22 +54,6 @@ func decodeRef(raw jsontext.Value, depth int) (Node, error) {
 	return n, nil
 }
 
-// decodeNodes decodes a list of nodes, each at the given depth.
-func decodeNodes(list []jsontext.Value, depth int) (Nodes, error) {
-	if list == nil {
-		return nil, nil
-	}
-	nodes := make(Nodes, len(list))
-	for i, raw := range list {
-		n, err := decodeNode(raw, depth)
-		if err != nil {
-			return nil, at(Slot{Kind: SlotChild, Index: i}, err)
-		}
-		nodes[i] = n
-	}
-	return nodes, nil
-}
-
 // decodeNode decodes one node at the given depth.
 func decodeNode(raw jsontext.Value, depth int) (Node, error) {
 	switch {
@@ -76,93 +68,164 @@ func decodeNode(raw jsontext.Value, depth int) (Node, error) {
 		Type *string `json:"type"`
 	}
 	if err := json.Unmarshal(raw, &head); err != nil {
-		return nil, wireError(err)
+		return nil, decodeError(err)
 	}
 	if head.Type == nil {
 		return nil, problem(i18n.Text(`missing "type"`))
 	}
+	var n interface {
+		Node
+		decode(raw jsontext.Value, depth int) error
+	}
 	switch *head.Type {
 	case typeGroup:
-		return decodeGroup(raw, depth)
+		n = &Group{}
 	case typeCheck:
-		return decodeCheck(raw)
+		n = &Check{}
 	case typeConst:
-		return decodeConst(raw)
+		n = &Const{}
 	case typeCount:
-		return decodeCount(raw, depth)
+		n = &Count{}
 	case typeCompare:
-		return decodeCompare(raw, depth)
+		n = &Compare{}
 	case typeScript:
-		return decodeScript(raw)
+		n = &Script{}
 	default:
 		return nil, problem(fmt.Sprintf(i18n.Text("unknown node type %q"), *head.Type))
 	}
+	if err := n.decode(raw, depth); err != nil {
+		return nil, err
+	}
+	return n, nil
 }
 
-// unmarshalWire reads raw into the wire form w, rejecting unknown members.
-func unmarshalWire(raw jsontext.Value, w any) error {
-	if err := json.Unmarshal(raw, w, json.RejectUnknownMembers(true)); err != nil {
-		return wireError(err)
+// unmarshalNode implements UnmarshalJSONFrom for a node, which it decodes as the root of a tree that must be a node of
+// the same type.
+func unmarshalNode[T any, P interface {
+	*T
+	Node
+}](dec *jsontext.Decoder, p P) error {
+	raw, err := dec.ReadValue()
+	if err != nil {
+		return err
+	}
+	n, err := decodeNode(raw, 1)
+	if err != nil {
+		return err
+	}
+	other, ok := n.(P)
+	if !ok {
+		return problem(i18n.Text("a node of another type"))
+	}
+	*p = *other
+	return nil
+}
+
+// decodeFields reads raw, a node at the given depth, into fields, the node's shadow.
+func decodeFields[T any](raw jsontext.Value, depth int, fields *T) error {
+	if err := json.Unmarshal(raw, &typedShadow[T]{Fields: fields}, decodeOptions(depth)); err != nil {
+		return decodeError(err)
 	}
 	return nil
 }
 
-// wireError returns the Problem a failed unmarshal of a wire form reports. It names the member at fault, but never
-// repeats the underlying error, which may carry a stack trace.
-func wireError(err error) error {
-	var member string
-	if se := (*json.SemanticError)(nil); errors.As(err, &se) {
-		member = strings.Join(slices.Collect(se.JSONPointer.Tokens()), ".")
+// decodeRequired is decodeFields for a node with a required enum member, which it first sets to unset, a value
+// outside the enum that only a missing member leaves in place.
+func decodeRequired[T any, E comparable](raw jsontext.Value, depth int, fields *T, member string, e *E, unset E) error {
+	*e = unset
+	if err := decodeFields(raw, depth, fields); err != nil {
+		return err
 	}
-	if errors.Is(err, json.ErrUnknownName) {
-		return problem(fmt.Sprintf(i18n.Text("unknown member %q"), member))
+	if *e == unset {
+		return problem(fmt.Sprintf(i18n.Text("missing %q"), member))
 	}
-	return problem(fmt.Sprintf(i18n.Text("invalid value for %q"), member))
+	return nil
 }
 
-func problem(msg string) error {
-	return Problem{Msg: msg}
-}
+var optionsByDepth [MaxDepth + 1]json.Options
 
-// at returns err, which decoding always makes a Problem, with s put in front of its path.
-func at(s Slot, err error) error {
-	var p Problem
-	errors.As(err, &p)
-	p.Path = append(Path{s}, p.Path...)
-	return p
-}
-
-func reasonTooDeep() string {
-	return fmt.Sprintf(i18n.Text("nested more than %d deep"), MaxDepth)
-}
-
-// typedShadow writes a node's wire type ahead of the fields of its method-less shadow type.
-type typedShadow[T any] struct {
-	Type   string `json:"type"`
-	Fields *T     `json:",embed"`
-}
-
-// encodeTyped writes a node through its shadow type, with the wire type first.
-func encodeTyped[T any](enc *jsontext.Encoder, typ string, fields *T) error {
-	return json.MarshalEncode(enc, &typedShadow[T]{Type: typ, Fields: fields})
-}
-
-// requiredKey resolves a persisted enum key that must be present and known.
-func requiredKey[E any](key *string, member string, extract func(string) (E, bool)) (E, error) {
-	if key == nil {
-		var zero E
-		return zero, problem(fmt.Sprintf(i18n.Text("missing %q"), member))
+func init() {
+	for depth := range optionsByDepth {
+		optionsByDepth[depth] = newDecodeOptions(depth)
 	}
-	return knownKey(*key, member, extract)
 }
 
-// knownKey resolves a persisted enum key that must be known.
-func knownKey[E any](key, member string, extract func(string) (E, bool)) (E, error) {
-	v, ok := extract(key)
-	if !ok {
-		return v, problem(fmt.Sprintf(i18n.Text("unknown %q value %q"), member, key))
-	}
-	return v, nil
+// decodeOptions returns the options that read the members of a node or operand at the given depth.
+func decodeOptions(depth int) json.Options {
+	return optionsByDepth[min(depth, MaxDepth)]
+}
+
+// newDecodeOptions returns the options that read the members of a node or operand at the given depth: unknown members
+// are rejected, and nested nodes, operands, criteria and enums are read by the strict decoders, a level deeper.
+func newDecodeOptions(depth int) json.Options {
+	return json.JoinOptions(json.RejectUnknownMembers(true), json.WithUnmarshalers(json.JoinUnmarshalers(
+		json.UnmarshalFromFunc(func(dec *jsontext.Decoder, n *Node) error {
+			raw, err := dec.ReadValue()
+			if err == nil {
+				*n, err = decodeNode(raw, depth+1)
+			}
+			return err
+		}),
+		json.UnmarshalFromFunc(func(dec *jsontext.Decoder, r *Ref) error {
+			raw, err := dec.ReadValue()
+			if err == nil {
+				r.Node, err = decodeRef(raw, depth+1)
+			}
+			return err
+		}),
+		json.UnmarshalFromFunc(func(dec *jsontext.Decoder, o *Operand) error {
+			raw, err := dec.ReadValue()
+			if err == nil {
+				err = o.decode(raw, depth+1)
+			}
+			return err
+		}),
+		json.UnmarshalFromFunc(func(dec *jsontext.Decoder, t *criteria.Text) error {
+			cmp, q, err := decodeCriterion[string](dec, criteria.ExtractKnownStringComparison, false)
+			*t = criteria.Text{Compare: cmp, Qualifier: q}
+			return err
+		}),
+		json.UnmarshalFromFunc(func(dec *jsontext.Decoder, n *criteria.Number) error {
+			cmp, q, err := decodeCriterion[fxp.Int](dec, criteria.ExtractKnownNumericComparison, false)
+			*n = criteria.Number{Compare: cmp, Qualifier: q}
+			return err
+		}),
+		json.UnmarshalFromFunc(func(dec *jsontext.Decoder, w *criteria.Weight) error {
+			cmp, q, err := decodeCriterion[fxp.Weight](dec, criteria.ExtractKnownNumericComparison, false)
+			*w = criteria.Weight{Compare: cmp, Qualifier: q}
+			return err
+		}),
+		json.UnmarshalFromFunc(func(dec *jsontext.Decoder, p **criteria.Number) error {
+			if dec.PeekKind() == 'n' {
+				_, err := dec.ReadToken()
+				*p = nil
+				return err
+			}
+			cmp, q, err := decodeCriterion[fxp.Int](dec, criteria.ExtractKnownNumericComparison, true)
+			*p = canonicalQuantity(&criteria.Number{Compare: cmp, Qualifier: q})
+			return err
+		}),
+		enumDecoder(ExtractKnownGroupMode),
+		enumDecoder(ExtractKnownCompareOp),
+		enumDecoder(ExtractKnownAggregate),
+	)))
+}
+
+// enumDecoder returns a decoder for an enum whose keys must be known.
+func enumDecoder[E any](extract func(string) (E, bool)) *json.Unmarshalers {
+	return json.UnmarshalFromFunc(func(dec *jsontext.Decoder, e *E) error {
+		var key string
+		if err := json.UnmarshalDecode(dec, &key); err != nil {
+			return err
+		}
+		var known bool
+		if *e, known = extract(key); !known {
+			return memberProblem(func(member string) string {
+				return fmt.Sprintf(i18n.Text("unknown %q value %q"), member, key)
+			})
+		}
+		return nil
+	})
 }
 
 // criterionWire is the raw form of a criterion: a comparison, which must be known, and a qualifier.
@@ -171,72 +234,128 @@ type criterionWire[Q any] struct {
 	Qualifier *Q      `json:"qualifier"`
 }
 
-// read resolves the comparison and qualifier of a criterion of a check, which must compare something: one that is
-// present needs a comparison other than "any".
-func read[C comparable, Q any](w *criterionWire[Q], member string, extract func(string) (C, bool)) (cmp C, q Q, err error) {
-	if w == nil {
-		return cmp, q, nil
+// decodeCriterion reads a criterion: null is none. That of a check must have a comparison other than "any", while a
+// quantity may leave it out to mean "any", though never with a qualifier.
+func decodeCriterion[Q any, C comparable](dec *jsontext.Decoder, extract func(string) (C, bool), quantity bool) (cmp C, q Q, err error) {
+	if dec.PeekKind() == 'n' {
+		_, err = dec.ReadToken()
+		return cmp, q, err
+	}
+	var w criterionWire[Q]
+	if err = json.UnmarshalDecode(dec, &w, json.RejectUnknownMembers(true)); err != nil {
+		return cmp, q, err
+	}
+	if w.Compare == nil && !quantity {
+		return cmp, q, memberProblem(func(member string) string {
+			return fmt.Sprintf(i18n.Text("missing %q"), member+".compare")
+		})
+	}
+	var known bool
+	if w.Compare == nil {
+		w.Compare = new("")
+	}
+	if cmp, known = extract(*w.Compare); !known {
+		return cmp, q, memberProblem(func(member string) string {
+			return fmt.Sprintf(i18n.Text("unknown %q value %q"), member+".compare", *w.Compare)
+		})
 	}
 	var none C
-	if cmp, err = requiredKey(w.Compare, member+".compare", extract); err == nil && cmp == none {
-		err = problem(fmt.Sprintf(i18n.Text("%q compares nothing"), member))
-	}
-	if w.Qualifier != nil {
+	switch {
+	case cmp == none && !quantity:
+		return cmp, q, memberProblem(func(member string) string {
+			return fmt.Sprintf(i18n.Text("%q compares nothing"), member)
+		})
+	case cmp == none && w.Qualifier != nil:
+		return cmp, q, memberProblem(func(member string) string {
+			return fmt.Sprintf(i18n.Text("%q has a qualifier but compares nothing"), member)
+		})
+	case w.Qualifier != nil:
 		q = *w.Qualifier
+	default:
 	}
-	return cmp, q, err
+	return cmp, q, nil
 }
 
-func readText(w *criterionWire[string], member string) (criteria.Text, error) {
-	cmp, q, err := read(w, member, criteria.ExtractKnownStringComparison)
-	return criteria.Text{Compare: cmp, Qualifier: q}, err
+// memberProblem is an error a decoder reports about the member it was reading, which only the node holding it can name.
+type memberProblem func(member string) string
+
+// Error implements error.
+func (m memberProblem) Error() string {
+	return m("?")
 }
 
-func readNumber(w *criterionWire[fxp.Int], member string) (criteria.Number, error) {
-	cmp, q, err := read(w, member, criteria.ExtractKnownNumericComparison)
-	return criteria.Number{Compare: cmp, Qualifier: q}, err
-}
-
-func readWeight(w *criterionWire[fxp.Weight], member string) (criteria.Weight, error) {
-	cmp, q, err := read(w, member, criteria.ExtractKnownNumericComparison)
-	return criteria.Weight{Compare: cmp, Qualifier: q}, err
-}
-
-// readQuantity resolves a count quantity or per-group: nil when absent, and "any" allowed, written as {}, but never
-// with a qualifier.
-func readQuantity(w *criterionWire[fxp.Int], member string) (*criteria.Number, error) {
-	if w == nil {
-		return nil, nil
+// decodeError returns the Problem a failed read of a node's or operand's members reports: a Problem from a nested
+// node or operand gains the path to it, and a decoder's problem or json/v2's error is given the member at fault, but
+// never repeats the underlying error, which may carry a stack trace.
+func decodeError(err error) error {
+	var path Path
+	var member string
+	if se := (*json.SemanticError)(nil); errors.As(err, &se) {
+		path, member = splitJSONPointer(se.JSONPointer)
 	}
-	cmp := criteria.AnyNumber
-	if w.Compare != nil {
-		var err error
-		if cmp, err = knownKey(*w.Compare, member+".compare", criteria.ExtractKnownNumericComparison); err != nil {
-			return nil, err
+	if p := (Problem{}); errors.As(err, &p) {
+		p.Path = append(path, p.Path...)
+		return p
+	}
+	if m := memberProblem(nil); errors.As(err, &m) {
+		return Problem{Path: path, Msg: m(member)}
+	}
+	if errors.Is(err, json.ErrUnknownName) {
+		return Problem{Path: path, Msg: fmt.Sprintf(i18n.Text("unknown member %q"), member)}
+	}
+	return Problem{Path: path, Msg: fmt.Sprintf(i18n.Text("invalid value for %q"), member)}
+}
+
+// splitJSONPointer splits a pointer into the slots it leads through and the member it then ends at, joined with dots.
+func splitJSONPointer(ptr jsontext.Pointer) (path Path, member string) {
+	tokens := slices.Collect(ptr.Tokens())
+	for len(tokens) != 0 {
+		kind, ok := slotKinds[tokens[0]]
+		if !ok {
+			break
 		}
-	}
-	n := &criteria.Number{Compare: cmp}
-	if w.Qualifier != nil {
-		if cmp == criteria.AnyNumber {
-			return nil, problem(fmt.Sprintf(i18n.Text("%q has a qualifier but compares nothing"), member))
+		s := Slot{Kind: kind}
+		if kind == SlotChild || kind == SlotSum {
+			if len(tokens) < 2 {
+				break
+			}
+			var err error
+			if s.Index, err = strconv.Atoi(tokens[1]); err != nil {
+				break
+			}
+			tokens = tokens[1:]
 		}
-		n.Qualifier = *w.Qualifier
+		path = append(path, s)
+		tokens = tokens[1:]
 	}
-	return canonicalQuantity(n), nil
+	return path, strings.Join(tokens, ".")
 }
 
-// quantityRef writes a Count quantity exactly when it is non-nil, "any" as {}. json/v2's omitzero on the pointer
-// itself would drop a non-nil "any", since criteria.Number reports itself as zero then.
-type quantityRef struct {
-	p *criteria.Number
+// slotKinds maps the members that hold nodes and operands to the kind of slot they are.
+var slotKinds = map[string]SlotKind{
+	"children":  SlotChild,
+	"only_when": SlotOnlyWhen,
+	"where":     SlotWhere,
+	"left":      SlotLeft,
+	"right":     SlotRight,
+	"sum":       SlotSum,
 }
 
-// IsZero implements json's omitzero check.
-func (q quantityRef) IsZero() bool {
-	return q.p == nil
+func problem(msg string) error {
+	return Problem{Msg: msg}
 }
 
-// MarshalJSONTo implements json.MarshalerTo.
-func (q quantityRef) MarshalJSONTo(enc *jsontext.Encoder) error {
-	return json.MarshalEncode(enc, &q.p.NumberData)
+func reasonTooDeep() string {
+	return fmt.Sprintf(i18n.Text("nested more than %d deep"), MaxDepth)
+}
+
+// typedShadow is a node's wire type ahead of the fields of its shadow.
+type typedShadow[T any] struct {
+	Type   string `json:"type"`
+	Fields *T     `json:",embed"`
+}
+
+// encodeTyped writes a node through its shadow, with the wire type first.
+func encodeTyped[T any](enc *jsontext.Encoder, typ string, fields *T) error {
+	return json.MarshalEncode(enc, &typedShadow[T]{Type: typ, Fields: fields})
 }

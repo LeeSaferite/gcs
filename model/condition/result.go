@@ -18,7 +18,7 @@ import (
 // Hit is one thing a Met node held for.
 type Hit struct {
 	Node Node
-	Item Item // the subject the node held for; nil for compares
+	Item Item // the subject the node held for; for a compare, nil, then each aggregated member it drew on
 }
 
 // Result is the outcome of evaluating a node.

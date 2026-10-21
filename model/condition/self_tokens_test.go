@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/richardwilkes/gcs/v5/model/criteria"
+	"github.com/richardwilkes/gcs/v5/model/nameable"
 	"github.com/richardwilkes/toolbox/v2/check"
 )
 
@@ -93,6 +94,10 @@ func TestSelfTokens(t *testing.T) {
 		{"replacement in list piece", checkText("v", criteria.IsText, "@Q@ {self.college}, z"), map[string]Value{"v": listValue("big fire")}, Met},
 		{"replaced to nothing", checkText("v", criteria.IsText, "@{{@"), map[string]Value{"v": listValue()}, Met},
 		{"absent subject", checkText("v", criteria.IsText, "{self.tl}"), map[string]Value{"v": absentValue()}, Unmet},
+		{"empty token piece contains", checkText("v", criteria.ContainsText, "Fire, {self.tl}"), map[string]Value{"v": listValue("Water")}, Unmet},
+		{"empty token piece does not contain", checkText("v", criteria.DoesNotContainText, "Fire, {self.tl}"), map[string]Value{"v": listValue("Water")}, Met},
+		{"empty token piece is", checkText("v", criteria.IsText, "Fire, {self.tl}"), map[string]Value{"v": listValue()}, Unmet},
+		{"empty token piece in text", checkText("v", criteria.IsText, "Fire, {self.tl}"), map[string]Value{"v": textValue("Fire, ")}, Met},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			c := check.New(t)
@@ -100,4 +105,22 @@ func TestSelfTokens(t *testing.T) {
 			c.Equal(tc.state, evalFor(t, tc.check, h, self, subject, yesNo).State)
 		})
 	}
+}
+
+// TestSelfTokenMarkers checks that the nameable keys of a qualifier holding self tokens are those evaluation looks up,
+// found in its literal runs once "{{" is undone, and that a marker holding a token is a problem.
+func TestSelfTokenMarkers(t *testing.T) {
+	c := check.New(t)
+	qualified := checkText("v", criteria.IsText, "@A{{B@ {self.college}")
+	m := make(map[string]string)
+	qualified.FillWithNameableKeys(m, nil)
+	c.Equal(map[string]string{"A{B": nameable.Unset}, m)
+	h := newHost()
+	h.replacements = map[string]string{"A{B": "Hot"}
+	self := newItem("self", map[string]Value{"college": textValue("Fire")})
+	subject := newItem("subject", map[string]Value{"v": textValue("Hot Fire")})
+	c.Equal(Met, evalFor(t, qualified, h, self, subject, yesNo).State)
+	c.Equal([]Problem{{Msg: "a nameable marker holds a {self.<field>} token"}},
+		Validate(checkText("v", criteria.IsText, "@Pick {self.college}@")))
+	c.Nil(Validate(checkText("v", criteria.IsText, "@Pick@ {self.college} @Other@")))
 }

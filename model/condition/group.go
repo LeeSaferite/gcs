@@ -22,35 +22,25 @@ import (
 
 var _ Node = &Group{}
 
-// Group combines its children: all of them, any of them, or at least N of them must be met. An exclusive group is an
-// all group of counts over one collection that share its members, each member counting toward one of them at most.
-// Wire type "group".
+// Group combines its children: all of them, any of them, or a count of them must be met. An exclusive group is an all
+// group of counts over one collection that share its members, each member counting toward one of them at most. Wire
+// type "group".
 type Group struct {
-	Mode      GroupMode `json:"mode"`
-	N         int       `json:"n,omitzero"` // at_least only
-	Not       bool      `json:"not,omitzero"`
-	Exclusive bool      `json:"exclusive,omitzero"`
-	OnlyWhen  Ref       `json:"only_when,omitzero"`
-	Children  Nodes     `json:"children,omitempty"`
+	Mode      GroupMode        `json:"mode"`
+	Quantity  *criteria.Number `json:"quantity,omitzero"` // count only: of the applicable children, as Count.Quantity
+	Not       bool             `json:"not,omitzero"`
+	Exclusive bool             `json:"exclusive,omitzero"`
+	OnlyWhen  Ref              `json:"only_when,omitzero"`
+	Children  Nodes            `json:"children,omitempty"`
 }
 
-// groupFields is the method-less shadow Group is written through.
+// groupFields is the shadow Group is written and read through; see codec.go.
 type groupFields Group
-
-// groupWire is the raw form Group is read through.
-type groupWire struct {
-	Type      string           `json:"type"`
-	Mode      *string          `json:"mode"`
-	N         int              `json:"n"`
-	Not       bool             `json:"not"`
-	Exclusive bool             `json:"exclusive"`
-	OnlyWhen  jsontext.Value   `json:"only_when"`
-	Children  []jsontext.Value `json:"children"`
-}
 
 // Clone implements Node.
 func (g *Group) Clone() Node {
 	c := *g
+	c.Quantity = clonePtr(g.Quantity)
 	c.OnlyWhen = g.OnlyWhen.clone()
 	c.Children = g.Children.clone()
 	return &c
@@ -60,7 +50,7 @@ func (g *Group) Clone() Node {
 func (g *Group) Hash(h hash.Hash) {
 	xhash.Num8(h, hashGroup)
 	xhash.StringWithLen(h, g.Mode.Key())
-	xhash.Num64(h, g.N)
+	hashQuantity(h, g.Quantity)
 	xhash.Bool(h, g.Not)
 	xhash.Bool(h, g.Exclusive)
 	g.OnlyWhen.hash(h)
@@ -77,12 +67,11 @@ func (g *Group) validate(v *validator) {
 	switch {
 	case g.Mode != g.Mode.EnsureValid():
 		v.report(i18n.Text("unknown group mode"))
-	case g.Mode == GroupAtLeast:
-		if g.N < 1 || g.N > len(g.Children) {
-			v.report(i18n.Text("the number of children needed is outside 1 to the number of children"))
-		}
-	case g.N != 0:
-		v.report(i18n.Text(`a number of children needed is set, but the mode is not "at least"`))
+	case !quantityKnown(g.Quantity):
+		v.report(i18n.Text("the quantity has an unknown comparison"))
+	case g.Mode != GroupCount && canonicalQuantity(g.Quantity) != nil:
+		v.report(i18n.Text(`a quantity is set, but the mode is not "count"`))
+	default:
 	}
 	if g.Exclusive {
 		g.validateExclusive(v)
@@ -110,8 +99,11 @@ func (g *Group) validateExclusive(v *validator) {
 				return
 			}
 			continue
-		case c.Not || c.GroupBy != "" || c.Exclusive:
+		case c.Not || c.GroupBy != "":
 			v.report(i18n.Text("an exclusive group holds a count that is negated or grouped"))
+			return
+		case c.Exclusive:
+			v.report(i18n.Text("an exclusive group holds a count that is exclusive itself"))
 			return
 		case !atLeastWhole(c.Quantity):
 			v.report(i18n.Text(`an exclusive group holds a count whose quantity is not "at least" a whole number`))
@@ -142,24 +134,19 @@ func (g *Group) MarshalJSONTo(enc *jsontext.Encoder) error {
 	if g.Mode != g.Mode.EnsureValid() {
 		return errors.New(i18n.Text("unknown group mode"))
 	}
-	return encodeTyped(enc, typeGroup, (*groupFields)(g))
+	if !quantityKnown(g.Quantity) {
+		return errors.New(i18n.Text("the quantity has an unknown comparison"))
+	}
+	other := *g
+	other.Quantity = canonicalQuantity(g.Quantity)
+	return encodeTyped(enc, typeGroup, (*groupFields)(&other))
 }
 
-func decodeGroup(raw jsontext.Value, depth int) (Node, error) {
-	var w groupWire
-	if err := unmarshalWire(raw, &w); err != nil {
-		return nil, err
-	}
-	mode, err := requiredKey(w.Mode, "mode", ExtractKnownGroupMode)
-	if err != nil {
-		return nil, err
-	}
-	g := &Group{Mode: mode, N: w.N, Not: w.Not, Exclusive: w.Exclusive}
-	if g.OnlyWhen.Node, err = decodeRef(w.OnlyWhen, depth+1); err != nil {
-		return nil, at(Slot{Kind: SlotOnlyWhen}, err)
-	}
-	if g.Children, err = decodeNodes(w.Children, depth+1); err != nil {
-		return nil, err
-	}
-	return g, nil
+// UnmarshalJSONFrom implements json.UnmarshalerFrom.
+func (g *Group) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
+	return unmarshalNode(dec, g)
+}
+
+func (g *Group) decode(raw jsontext.Value, depth int) error {
+	return decodeRequired(raw, depth, (*groupFields)(g), "mode", &g.Mode, LastGroupMode+1)
 }

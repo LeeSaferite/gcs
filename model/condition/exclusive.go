@@ -9,7 +9,10 @@
 
 package condition
 
-import "github.com/richardwilkes/gcs/v5/model/fxp"
+import (
+	"github.com/richardwilkes/gcs/v5/model/criteria"
+	"github.com/richardwilkes/gcs/v5/model/fxp"
+)
 
 // poolSolver solves one pool: the counts of an exclusive group, or the values of an exclusive grouped count, which
 // share the members so that each counts toward one of them at most. Members are keyed by identity.
@@ -117,8 +120,10 @@ func (s *poolSolver) demand(c *Count, f frame) (*demand, *Result) {
 }
 
 // exclusiveGroupedCount groups the matched members of an exclusive grouped count, each member counting toward one
-// value only, choosing the assignment that fills the most values. It returns the number of values filled and which
-// members they hold, which in Collect mode includes those that could join a filled value that no other value holds.
+// value only, choosing the assignment that fills the most values. It returns the number of values filled and, in
+// Collect mode, which members they hold, including those that could join a filled value that no other value holds. A
+// YesNo evaluation stops looking once the count's quantity is decided, so the number it returns is then only enough to
+// decide it.
 func (e *evaluator) exclusiveGroupedCount(c *Count, members []Item) (have int, used []bool, fail *Result) {
 	s := newPoolSolver(e)
 	cands := make([]int, len(members))
@@ -130,18 +135,41 @@ func (e *evaluator) exclusiveGroupedCount(c *Count, members []Item) (have int, u
 		return 0, nil, fail
 	}
 	s.net = newPoolNet(len(s.items), []*demand{d})
-	owners, ok := s.maximize(d)
+	enough := len(d.values) + 1
+	if !e.collect {
+		enough = decidingFill(c.Quantity, enough)
+	}
+	owners, ok := s.maximize(d, enough)
 	if !ok {
 		r := failure(reasonTooComplex())
 		return 0, nil, &r
 	}
 	_, _, have = d.tally(owners)
+	if !e.collect {
+		return have, nil, nil
+	}
 	surplus([]*demand{d}, owners)
 	used = make([]bool, len(members))
 	for i, m := range cands {
 		used[i] = owners[m].d == d
 	}
 	return have, used, nil
+}
+
+// decidingFill returns how many filled values decide a quantity, whatever the most that could be filled is: N for at
+// least N, N + 1 for at most N, and otherwise for any other comparison.
+func decidingFill(q *criteria.Number, otherwise int) int {
+	q = canonicalQuantity(q)
+	switch {
+	case q == nil:
+		return 1
+	case q.Compare == criteria.AtLeastNumber:
+		return max(q.Qualifier.Ceil().AsInteger[int](), 0)
+	case q.Compare == criteria.AtMostNumber:
+		return max(q.Qualifier.Trunc().AsInteger[int]()+1, 0)
+	default:
+		return otherwise
+	}
 }
 
 // solve assigns pool members to the demands, returning the assignment and how many members the demands are still

@@ -59,12 +59,11 @@ func (c *Check) negative() bool {
 
 // decision is what a check decided before Not. When failed is set, fail is the outcome to report instead.
 type decision struct {
-	have           fxp.Int // the number or weight compared
-	haveKind       ValueKind
-	fail           outcome
-	met            bool
-	testsSomething bool // an "any" check scores 0 and gives no hit
-	failed         bool
+	have     fxp.Int // the number or weight compared
+	haveKind ValueKind
+	fail     outcome
+	met      bool
+	failed   bool
 }
 
 // decide evaluates the check up to its state before Not, filling in d, which the caller owns so that it is never
@@ -77,7 +76,6 @@ func (c *Check) decide(e *evaluator, f frame, d *decision) {
 		d.fail, d.failed = outcome{reason: fmt.Sprintf(i18n.Text("no field %q"), c.Field), state: Failed}, true
 		return
 	}
-	d.testsSomething = true
 	if v.Kind == ValueAbsent {
 		d.met = c.negative()
 		return
@@ -107,7 +105,6 @@ func (c *Check) decide(e *evaluator, f frame, d *decision) {
 		d.met = c.Weight.Matches(fxp.Weight(v.Number))
 	default:
 		d.met = v.Kind != ValueBool || v.Bool
-		d.testsSomething = v.Kind == ValueBool
 	}
 }
 
@@ -121,7 +118,8 @@ func (c *Check) test(e *evaluator, f frame) outcome {
 	return outcome{state: metState(d.met, c.Not)}
 }
 
-// eval implements Node. In Collect mode a Met check that tests something scores 1 and, unless negated, is a hit.
+// eval implements Node. In Collect mode a Met check scores 1, even one without a criterion, which asks whether the
+// subject has the field, and unless negated is a hit.
 func (c *Check) eval(e *evaluator, f frame) Result {
 	var d decision
 	c.decide(e, f, &d)
@@ -138,7 +136,7 @@ func (c *Check) eval(e *evaluator, f frame) Result {
 		default:
 		}
 	}
-	if e.collect && r.State == Met && d.testsSomething {
+	if e.collect && r.State == Met {
 		r.Specificity = 1
 		if !c.Not {
 			r.hits = []Hit{{Node: c, Item: f.subject}}

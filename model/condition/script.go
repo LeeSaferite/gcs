@@ -24,19 +24,11 @@ var _ Node = &Script{}
 type Script struct {
 	Name   string `json:"name,omitzero"`
 	Script string `json:"script"`
-	Lang   string `json:"lang,omitzero"` // "" is js, the only language there is
+	Lang   string `json:"lang,omitzero"` // "" or "js", the only language there is
 }
 
-// scriptFields is the method-less shadow Script is written through.
+// scriptFields is the shadow Script is written and read through; see codec.go.
 type scriptFields Script
-
-// scriptWire is the raw form Script is read through.
-type scriptWire struct {
-	Type   string `json:"type"`
-	Name   string `json:"name"`
-	Script string `json:"script"`
-	Lang   string `json:"lang"`
-}
 
 // Clone implements Node.
 func (s *Script) Clone() Node {
@@ -58,7 +50,7 @@ func (s *Script) FillWithNameableKeys(m, existing map[string]string) {
 }
 
 func (s *Script) validate(v *validator) {
-	if s.Lang != "" {
+	if s.Lang != "" && s.Lang != "js" {
 		v.report(i18n.Text("unknown script language"))
 	}
 }
@@ -70,12 +62,13 @@ func (s *Script) MarshalJSONTo(enc *jsontext.Encoder) error {
 	return encodeTyped(enc, typeScript, (*scriptFields)(s))
 }
 
-func decodeScript(raw jsontext.Value) (Node, error) {
-	var w scriptWire
-	if err := unmarshalWire(raw, &w); err != nil {
-		return nil, err
-	}
-	return &Script{Name: w.Name, Script: w.Script, Lang: w.Lang}, nil
+// UnmarshalJSONFrom implements json.UnmarshalerFrom.
+func (s *Script) UnmarshalJSONFrom(dec *jsontext.Decoder) error {
+	return unmarshalNode(dec, s)
+}
+
+func (s *Script) decode(raw jsontext.Value, depth int) error {
+	return decodeFields(raw, depth, (*scriptFields)(s))
 }
 
 // eval implements Node. The host runs the script, at most once per (node, self, subject) in one evaluation. A script

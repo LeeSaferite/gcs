@@ -81,12 +81,9 @@ func randomNode(r *rand.Rand, depth int) Node {
 		for range r.IntN(4) {
 			g.Children = append(g.Children, randomNode(r, depth+1))
 		}
-		if g.Mode == GroupAtLeast {
-			if len(g.Children) == 0 {
-				g.Mode = GroupAll
-			} else {
-				g.N = 1 + r.IntN(len(g.Children))
-			}
+		if g.Mode == GroupCount && r.IntN(2) == 0 {
+			g.Quantity = numberCritPtr(criteria.NumericComparisons[r.IntN(len(criteria.NumericComparisons))],
+				int64(r.IntN(len(g.Children)+2)))
 		}
 		if r.IntN(4) == 0 {
 			g.OnlyWhen = Ref{Node: randomNode(r, depth+1)}

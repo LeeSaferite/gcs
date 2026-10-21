@@ -135,7 +135,8 @@ func TestCountHits(t *testing.T) {
 func TestGroupHitsAndSpecificity(t *testing.T) {
 	c := check.New(t)
 	h := newHost()
-	subject := newItem("Fireball", map[string]Value{"college": textValue("Fire"), "level": numberValue(3)})
+	subject := newItem("Fireball", map[string]Value{"college": textValue("Fire"), "level": numberValue(3)}).
+		with("kids", newItem("kid", nil))
 	name := checkText("name", criteria.IsText, "Fireball")
 	college := checkText("college", criteria.IsText, "Fire")
 	level := &Check{Field: "level", Number: numberCrit(criteria.AtLeastNumber, 2)}
@@ -147,11 +148,14 @@ func TestGroupHitsAndSpecificity(t *testing.T) {
 		spec int
 		hits int
 	}{
-		{"all", &Group{Children: Nodes{name, college, &Const{Value: true}, &Check{Field: "name"}}}, 2, 2},
+		{"all", &Group{Children: Nodes{name, college, &Const{Value: true}, &Check{Field: "name"}}}, 3, 3},
 		{"any", &Group{Mode: GroupAny, Children: Nodes{name, pair, miss}}, 2, 3},
-		{"at_least", &Group{Mode: GroupAtLeast, N: 2, Children: Nodes{name, pair, &Const{Value: true}, miss}}, 3, 3},
-		{"at_least skipped", &Group{Mode: GroupAtLeast, N: 2, Children: Nodes{name, &Script{Script: "skipped"}}}, 1, 1},
+		{"count", &Group{Mode: GroupCount, Quantity: atLeast(2), Children: Nodes{name, pair, &Const{Value: true}, miss}}, 3, 3},
+		{"count of one", &Group{Mode: GroupCount, Children: Nodes{name, pair}}, 2, 3},
+		{"count at most", &Group{Mode: GroupCount, Quantity: numberCritPtr(criteria.AtMostNumber, 2), Children: Nodes{name, pair, miss}}, 3, 3},
+		{"count at least 0", &Group{Mode: GroupCount, Quantity: atLeast(0), Children: Nodes{name, miss}}, 0, 1},
 		{"not", &Group{Not: true, Children: Nodes{miss}}, 0, 0},
+		{"count of any number", &Count{Of: "kids", Quantity: &criteria.Number{}}, 0, 1},
 		{"script", &Script{Script: "met"}, 0, 0},
 		{"const", &Const{Value: true}, 0, 0},
 	} {

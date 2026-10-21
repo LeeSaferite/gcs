@@ -60,8 +60,14 @@ func CloneNode(n Node) Node {
 	return n.Clone()
 }
 
-// HashNode writes n into the hasher, or 255 if n is nil.
+// HashNode writes n into the hasher as the root of a tree, as a Ref holding it is written: 255 for nil and for an
+// empty group.
 func HashNode(h hash.Hash, n Node) {
+	Ref{Node: n}.hash(h)
+}
+
+// hashNode writes n into the hasher, or 255 if n is nil.
+func hashNode(h hash.Hash, n Node) {
 	if n == nil {
 		xhash.Num8(h, hashNil)
 		return
@@ -75,13 +81,15 @@ type Ref struct {
 	Node Node
 }
 
-// IsZero returns true for a nil node and for an empty group, which evaluates exactly like nil.
+// IsZero returns true for a nil node and for an empty group, which evaluates exactly like nil: an all or any group,
+// negated or not, with no children, guard or quantity that isn't exclusive.
 func (r Ref) IsZero() bool {
 	if r.Node == nil {
 		return true
 	}
 	g, ok := r.Node.(*Group)
-	return ok && len(g.Children) == 0 && g.OnlyWhen.IsZero() && g.N == 0
+	return ok && len(g.Children) == 0 && g.OnlyWhen.IsZero() && (g.Mode == GroupAll || g.Mode == GroupAny) &&
+		canonicalQuantity(g.Quantity) == nil && !g.Exclusive
 }
 
 func (r Ref) clone() Ref {
@@ -120,7 +128,7 @@ func (n Nodes) clone() Nodes {
 func (n Nodes) hash(h hash.Hash) {
 	xhash.Num64(h, len(n))
 	for _, one := range n {
-		HashNode(h, one)
+		hashNode(h, one)
 	}
 }
 

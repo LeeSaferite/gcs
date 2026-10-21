@@ -102,9 +102,7 @@ func (w *walker) child(s Slot, n Node) {
 }
 
 func (w *walker) ref(kind SlotKind, r Ref) {
-	if !r.IsZero() {
-		w.child(Slot{Kind: kind}, r.Node)
-	}
+	w.child(Slot{Kind: kind}, r.Node)
 }
 
 func (w *walker) operand(s Slot, o *Operand) {
